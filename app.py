@@ -546,6 +546,72 @@ def analyze_batch():
     return response
 
 # ==============================================================================
+# DASHBOARD TELEMETRY & AGENT STATS ENDPOINT
+# ==============================================================================
+
+dashboard_stats_data = {
+    'total_investigations': 24,
+    'low_risk': 12,
+    'medium_risk': 6,
+    'high_risk': 4,
+    'critical_risk': 2,
+    'agent_status': 'ONLINE',
+    'recent_investigations': [
+        {
+            'id': 'INV-20261001-A901B2',
+            'target': 'suspicious-email',
+            'display_name': 'Apple ID Locked - Foreign Login Alert',
+            'type': 'email',
+            'risk_level': 'HIGH',
+            'risk_score': 91.6,
+            'time_ago': '2 min ago',
+            'timestamp': '2026-10-01 13:25:12',
+            'summary': 'Spoofed Apple Support email containing credential harvesting URL on .top domain'
+        },
+        {
+            'id': 'INV-20261001-C412D3',
+            'target': 'example-url',
+            'display_name': 'PayPal Billing Verification Portal',
+            'type': 'url',
+            'risk_level': 'LOW',
+            'risk_score': 18.2,
+            'time_ago': '10 min ago',
+            'timestamp': '2026-10-01 13:17:40',
+            'summary': 'Verified legitimate domain structure with passing cryptographic authentication'
+        },
+        {
+            'id': 'INV-20261001-E831F4',
+            'target': 'browser-history',
+            'display_name': 'Workstation Endpoint Chrome History',
+            'type': 'browser_history',
+            'risk_level': 'MEDIUM',
+            'risk_score': 54.0,
+            'time_ago': '18 min ago',
+            'timestamp': '2026-10-01 13:09:15',
+            'summary': 'Anomalous navigation spike to unclassified domains following link redirection'
+        },
+        {
+            'id': 'INV-20261001-F992E5',
+            'target': 'phishing_urgent_bank_alert.eml',
+            'display_name': 'Chase Wire Fraud Alert ($4,850)',
+            'type': 'email',
+            'risk_level': 'CRITICAL',
+            'risk_score': 99.0,
+            'time_ago': '26 min ago',
+            'timestamp': '2026-10-01 13:01:02',
+            'summary': 'Multi-URL delivery with direct IP address endpoint and severe NLP coercion'
+        }
+    ]
+}
+
+@app.route('/api/dashboard/stats', methods=['GET'])
+def get_dashboard_stats():
+    """Returns high-level forensic dashboard metrics and recent investigation audit records."""
+    response = jsonify(dashboard_stats_data)
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
+# ==============================================================================
 # AI FORENSIC INVESTIGATION AGENT API ENDPOINTS
 # ==============================================================================
 
@@ -679,6 +745,32 @@ def agent_investigate():
 
         # Cache report
         investigations_cache[report['investigation_id']] = report
+
+        # Dynamically update dashboard telemetry
+        dashboard_stats_data['total_investigations'] += 1
+        lvl = report.get('risk_level', 'MEDIUM').upper()
+        if lvl == 'CRITICAL':
+            dashboard_stats_data['critical_risk'] += 1
+        elif lvl == 'HIGH':
+            dashboard_stats_data['high_risk'] += 1
+        elif lvl == 'MEDIUM':
+            dashboard_stats_data['medium_risk'] += 1
+        else:
+            dashboard_stats_data['low_risk'] += 1
+
+        target_display = str(input_text or req_type)[:40].strip()
+        dashboard_stats_data['recent_investigations'].insert(0, {
+            'id': report['investigation_id'],
+            'target': target_display or req_type,
+            'display_name': report.get('summary', '')[:45] or f"Investigation {report['investigation_id']}",
+            'type': req_type,
+            'risk_level': lvl,
+            'risk_score': report.get('risk_score', 0),
+            'time_ago': 'Just now',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'summary': report.get('summary', '')
+        })
+        dashboard_stats_data['recent_investigations'] = dashboard_stats_data['recent_investigations'][:10]
 
         response = jsonify(report)
         response.headers.add("Access-Control-Allow-Origin", "*")

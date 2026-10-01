@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { initUrlChart(); } catch (e) { console.warn("Chart init error:", e); }
     try { initSnifferChart(); } catch (e) { console.warn("Sniffer chart init error:", e); }
     try { loadSampleEmailsList(); } catch (e) { console.warn("Samples load error:", e); }
-    try { initThreatMap(); } catch (e) { console.warn("Threat map init error:", e); }
+    try { initDashboardOverview(); } catch (e) { console.warn("Dashboard overview init error:", e); }
     try { initSocketIO(); } catch (e) { console.warn("Socket.IO init error:", e); }
     try { initTabs(); } catch (e) { console.warn("Tabs init error:", e); }
     try { initKeyboardShortcuts(); } catch (e) { console.warn("Shortcuts init error:", e); }
@@ -179,9 +179,9 @@ function switchTab(targetId, tabElement = null) {
         tabElement.classList.remove('text-on-surface-variant');
     }
     
-    // Invalidate map size if dashboard is shown
-    if (targetId === 'tab-dashboard' && threatMapInstance) {
-        setTimeout(() => threatMapInstance.invalidateSize(), 100);
+    // Refresh dashboard stats if dashboard is shown
+    if (targetId === 'tab-dashboard' && typeof initDashboardOverview === 'function') {
+        initDashboardOverview();
     }
 }
 
@@ -795,41 +795,102 @@ function toggleWebSocketStream() {
     }
 }
 
-// --- Map & SHAP Utils ---
-function initThreatMap() {
-    const mapContainer = document.getElementById('threatMap');
-    if (!mapContainer || typeof L === 'undefined') return;
-    threatMapInstance = L.map('threatMap', { center: [20.0, 0.0], zoom: 2, minZoom: 2, maxBounds: [[-90, -180], [90, 180]], zoomControl: false, attributionControl: false });
-    
-    // Using OpenStreetMap instead of CartoDB to avoid "API KEY REQUIRED" watermarks
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, noWrap: true }).addTo(threatMapInstance);
-    mapMarkersLayer = L.layerGroup().addTo(threatMapInstance);
-    
-    addGeoMarker({ lat: 55.7558, lon: 37.6173, city: 'Moscow' }, 'http://secure-verify-paypal-login.ru', 94.2);
-    addGeoMarker({ lat: 51.5074, lon: -0.1278, city: 'London' }, 'https://github.com', 1.2);
-    
-    setTimeout(() => { if (threatMapInstance) threatMapInstance.invalidateSize(); }, 1500);
-}
-
-function addGeoMarker(geo, label, proba, isLiveFocus = false) {
-    if (!threatMapInstance || !mapMarkersLayer || !geo || !geo.lat || !geo.lon) return;
-    let markerClass = 'leaflet-pulse-safe';
-    if (proba >= 70) markerClass = 'leaflet-pulse-danger';
-    else if (proba >= 35) markerClass = 'leaflet-pulse-warn';
-
-    const customIcon = L.divIcon({ className: 'custom-map-pulse', html: `<div class="${markerClass}"></div>`, iconSize: [20, 20], iconAnchor: [10, 10] });
-    const marker = L.marker([geo.lat, geo.lon], { icon: customIcon }).addTo(mapMarkersLayer);
-    
-    const layers = mapMarkersLayer.getLayers();
-    if (layers.length > 25) mapMarkersLayer.removeLayer(layers[0]);
-    
-    if (isLiveFocus && threatMapInstance) {
-        const mapContainer = document.getElementById('threatMap');
-        if (mapContainer && mapContainer.offsetHeight > 0) {
-            threatMapInstance.flyTo([geo.lat, geo.lon], 4, { animate: true, duration: 1.5 });
-        }
+// --- Forensic Engine Dashboard Overview & Telemetry ---
+async function initDashboardOverview() {
+    try {
+        const resp = await fetch('/api/dashboard/stats');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        renderDashboardStats(data);
+    } catch (err) {
+        console.warn("Could not load dashboard stats:", err);
     }
 }
+
+function renderDashboardStats(data) {
+    if (!data) return;
+    const totalElem = document.getElementById('dash-stat-total');
+    const lowElem = document.getElementById('dash-stat-low');
+    const medElem = document.getElementById('dash-stat-med');
+    const highElem = document.getElementById('dash-stat-high');
+    const critElem = document.getElementById('dash-stat-crit');
+
+    if (totalElem) totalElem.innerText = data.total_investigations ?? 24;
+    if (lowElem) lowElem.innerText = data.low_risk ?? 12;
+    if (medElem) medElem.innerText = data.medium_risk ?? 6;
+    if (highElem) highElem.innerText = data.high_risk ?? 4;
+    if (critElem) critElem.innerText = data.critical_risk ?? 2;
+
+    const tbody = document.getElementById('dash-recent-investigations');
+    if (tbody && data.recent_investigations && Array.isArray(data.recent_investigations)) {
+        tbody.innerHTML = data.recent_investigations.map(inv => {
+            const risk = (inv.risk_level || 'MEDIUM').toUpperCase();
+            let badgeClass = 'bg-warning-amber/20 text-warning-amber border-warning-amber/30';
+            if (risk === 'CRITICAL') badgeClass = 'bg-neon-crimson/20 text-neon-crimson border-neon-crimson/30 animate-pulse';
+            else if (risk === 'HIGH') badgeClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+            else if (risk === 'LOW') badgeClass = 'bg-cyber-lime/20 text-cyber-lime border-cyber-lime/30';
+
+            let icon = 'manage_search';
+            let artifactLabel = 'Artifact Analysis';
+            const typeLower = (inv.type || '').toLowerCase();
+            if (typeLower.includes('email')) {
+                icon = 'mail';
+                artifactLabel = 'Email Message';
+            } else if (typeLower.includes('url')) {
+                icon = 'public';
+                artifactLabel = 'URL Analysis';
+            } else if (typeLower.includes('history') || typeLower.includes('browser')) {
+                icon = 'history';
+                artifactLabel = 'Endpoint History';
+            }
+
+            const targetName = inv.target || inv.display_name || inv.id;
+            const timeAgo = inv.time_ago || 'Recent';
+
+            return `
+                <tr class="hover:bg-surface-container-high/40 transition-colors">
+                    <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-sm text-cyber-lime">${icon}</span>
+                        <span class="truncate max-w-[280px]" title="${targetName}">${targetName}</span>
+                    </td>
+                    <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">${artifactLabel}</td>
+                    <td class="py-3.5 px-6">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">${risk}</span>
+                    </td>
+                    <td class="py-3.5 px-6 text-on-surface-variant text-xs">${timeAgo}</td>
+                    <td class="py-3.5 px-6 text-right">
+                        <button onclick="launchRecentInvestigation('${inv.id}')" class="text-xs text-cyber-lime hover:underline font-bold inline-flex items-center gap-1 justify-end ml-auto">
+                            Inspect <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function launchRecentInvestigation(invId) {
+    if (typeof switchTab === 'function') {
+        switchTab('tab-agent');
+    }
+    const agentTab = document.getElementById('tab-agent');
+    if (agentTab) {
+        agentTab.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function launchPresetInvestigation(scenarioId) {
+    if (typeof switchTab === 'function') {
+        switchTab('tab-agent');
+    }
+    if (typeof loadAgentScenario === 'function') {
+        loadAgentScenario(scenarioId);
+    }
+}
+
+// Map compatibility stubs (no-op since map is completely removed)
+function initThreatMap() { return; }
+function addGeoMarker() { return; }
 
 function renderShapBars(containerId, barsId, shapData) {
     const container = document.getElementById(containerId);
