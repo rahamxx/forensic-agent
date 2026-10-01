@@ -1,0 +1,882 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Threat Intelligence &amp; Model Training Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#003915",
+                      "surface": "#0c160d",
+                      "on-primary-fixed-variant": "#005322",
+                      "charcoal-grey": "#1A1A1C",
+                      "inverse-surface": "#dbe6d7",
+                      "surface-dim": "#0c160d",
+                      "glass-fill": "rgba(10, 10, 11, 0.7)",
+                      "background": "#0c160d",
+                      "primary-container": "#32ff7e",
+                      "surface-container-highest": "#2d372d",
+                      "primary": "#f3fff0",
+                      "on-tertiary": "#3e2e00",
+                      "secondary-fixed": "#e5e2e3",
+                      "cyber-lime": "#32FF7E",
+                      "secondary": "#c8c6c7",
+                      "surface-container-lowest": "#071008",
+                      "tertiary-fixed-dim": "#e5c36f",
+                      "inverse-primary": "#006d2f",
+                      "surface-container-low": "#141e15",
+                      "surface-container": "#182219",
+                      "on-surface-variant": "#bacbb8",
+                      "inverse-on-surface": "#293329",
+                      "on-secondary-fixed": "#1c1b1c",
+                      "on-primary-fixed": "#00210a",
+                      "surface-variant": "#2d372d",
+                      "on-tertiary-container": "#795f14",
+                      "secondary-container": "#4a494a",
+                      "secondary-fixed-dim": "#c8c6c7",
+                      "warning-amber": "#FF9F1A",
+                      "tertiary-fixed": "#ffdf95",
+                      "surface-tint": "#00e46b",
+                      "surface-container-high": "#232c23",
+                      "primary-fixed": "#66ff8f",
+                      "on-error-container": "#ffdad6",
+                      "outline": "#849583",
+                      "glass-stroke": "rgba(255, 255, 255, 0.12)",
+                      "tertiary-container": "#ffdb85",
+                      "on-primary-container": "#007232",
+                      "tertiary": "#fffbf9",
+                      "on-secondary-container": "#bab8b9",
+                      "error-container": "#93000a",
+                      "error": "#ffb4ab",
+                      "neon-crimson": "#FF3F34",
+                      "on-background": "#dbe6d7",
+                      "on-secondary": "#313031",
+                      "on-tertiary-fixed": "#251a00",
+                      "outline-variant": "#3b4b3c",
+                      "on-secondary-fixed-variant": "#474647",
+                      "on-tertiary-fixed-variant": "#594400",
+                      "on-error": "#690005",
+                      "on-surface": "#dbe6d7",
+                      "surface-bright": "#323c32",
+                      "primary-fixed-dim": "#00e46b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "component-gap": "12px",
+                      "gutter": "16px",
+                      "container-margin": "24px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "body-md": [ "Inter" ],
+                      "headline-lg": [ "Inter" ],
+                      "data-display": [ "JetBrains Mono" ],
+                      "label-caps": [ "Inter" ],
+                      "headline-md": [ "Inter" ],
+                      "code-sm": [ "JetBrains Mono" ]
+              },
+              "fontSize": {
+                      "body-md": [ "16px", { "lineHeight": "1.6", "fontWeight": "400" } ],
+                      "headline-lg": [ "32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" } ],
+                      "data-display": [ "14px", { "lineHeight": "1.4", "fontWeight": "500" } ],
+                      "label-caps": [ "11px", { "lineHeight": "1", "letterSpacing": "0.08em", "fontWeight": "700" } ],
+                      "headline-md": [ "24px", { "lineHeight": "1.3", "fontWeight": "600" } ],
+                      "code-sm": [ "12px", { "lineHeight": "1.5", "fontWeight": "400" } ]
+              }
+            }
+          }
+        }
+</script>
+<style>
+/* Fix Leaflet map tile rendering with Tailwind */
+.leaflet-container img { max-width: none !important; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen selection:bg-cyber-lime selection:text-background">
+
+<nav id="top-navbar" class="fixed top-0 right-0 left-0 h-16 border-b border-glass-stroke bg-glass-fill dark:bg-glass-fill flex justify-between items-center px-gutter w-full z-50 glass-panel transition-all duration-300">
+<div class="flex items-center gap-4">
+<button id="sidebar-toggle" class="text-on-surface-variant hover:text-cyber-lime transition-colors">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-black text-on-surface tracking-widest uppercase">FORENSIC_ENGINE</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-variant/50 border border-glass-stroke rounded text-on-surface pl-9 pr-4 py-1.5 focus:outline-none focus:border-cyber-lime text-code-sm font-code-sm w-64 transition-colors" placeholder="Search parameters..." type="text">
+</div>
+<div class="flex items-center gap-4 text-cyber-lime dark:text-cyber-lime">
+<button onclick="openAgentWorkbench()" class="hidden sm:flex items-center gap-2 bg-cyber-lime/15 border border-cyber-lime text-cyber-lime px-3 py-1.5 rounded-lg hover:bg-cyber-lime hover:text-background font-bold text-xs uppercase tracking-wider transition-all shadow-[0_0_12px_rgba(50,255,126,0.25)]">
+<span class="material-symbols-outlined text-base">psychology</span> AI Agent Workbench
+</button>
+<span class="material-symbols-outlined hover:glow-sm cursor-pointer transition-colors hover:text-white" data-weight="fill" onclick="runPresentationDemo()">settings_suggest</span>
+<div class="flex items-center gap-2 pl-4 border-l border-glass-stroke cursor-pointer group">
+<span class="font-label-caps text-label-caps text-on-surface group-hover:text-cyber-lime transition-colors">Investigator</span>
+<span class="material-symbols-outlined text-2xl group-hover:text-cyber-lime transition-colors" data-weight="fill">account_circle</span>
+</div>
+</div>
+</div>
+</nav>
+
+<!-- TAB: IMAP INBOX SCANNER -->
+<div id="tab-imap" class="tab-content hidden max-w-7xl mx-auto px-container-margin py-8">
+<div class="flex items-center gap-4 mb-8">
+<span class="material-symbols-outlined text-4xl text-cyber-lime">inbox</span>
+<h2 class="font-headline-lg text-headline-lg font-black tracking-widest uppercase">IMAP Inbox Scanner</h2>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="glass-panel p-6">
+<h3 class="font-headline-sm font-bold uppercase text-on-surface-variant mb-4">Connect IMAP</h3>
+<div class="flex flex-col gap-4">
+<input type="text" id="imap-email" class="w-full bg-surface-variant/50 border border-glass-stroke text-on-surface px-4 py-2 rounded focus:outline-none focus:border-cyber-lime" placeholder="Email Address">
+<input type="password" id="imap-password" class="w-full bg-surface-variant/50 border border-glass-stroke text-on-surface px-4 py-2 rounded focus:outline-none focus:border-cyber-lime" placeholder="App Password">
+<input type="text" id="imap-server" class="w-full bg-surface-variant/50 border border-glass-stroke text-on-surface px-4 py-2 rounded focus:outline-none focus:border-cyber-lime" placeholder="IMAP Server (e.g. imap.gmail.com)" value="imap.gmail.com">
+<input type="number" id="imap-limit" class="w-full bg-surface-variant/50 border border-glass-stroke text-on-surface px-4 py-2 rounded focus:outline-none focus:border-cyber-lime" placeholder="Number of emails to fetch" value="5">
+<button id="btn-scan-imap" class="bg-cyber-lime text-background font-bold px-6 py-2 rounded hover:bg-opacity-80 transition-colors mt-2">Scan Inbox</button>
+</div>
+</div>
+</div>
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div class="glass-panel p-6 h-full min-h-[400px]">
+<h3 class="font-headline-sm font-bold uppercase text-on-surface-variant mb-4">Inbox Threat Analysis</h3>
+<div id="imap-results" class="flex flex-col gap-4 overflow-y-auto max-h-[600px] font-code-sm text-sm">
+<div class="text-on-surface-variant text-center mt-10">Awaiting IMAP connection...</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: DARK WEB SCANNER -->
+<div id="tab-darkweb" class="tab-content hidden max-w-7xl mx-auto px-container-margin py-8">
+<div class="flex items-center gap-4 mb-8">
+<span class="material-symbols-outlined text-4xl text-cyber-lime">password</span>
+<h2 class="font-headline-lg text-headline-lg font-black tracking-widest uppercase">Dark Web Password Scanner</h2>
+</div>
+<div class="glass-panel p-8 max-w-3xl mx-auto text-center">
+<p class="text-on-surface-variant mb-8">Enter a password to securely check if it has been exposed in a data breach using the HaveIBeenPwned k-Anonymity API. We never send your full password over the network.</p>
+<div class="flex gap-4">
+<input type="password" id="pwned-password-input" class="flex-1 bg-surface-variant/50 border border-glass-stroke text-on-surface px-6 py-4 rounded-lg focus:outline-none focus:border-cyber-lime font-code-sm text-lg" placeholder="Enter password to verify...">
+<button id="btn-check-password" class="bg-cyber-lime text-background font-bold px-8 py-4 rounded-lg hover:bg-opacity-80 transition-colors text-lg uppercase tracking-widest">Verify</button>
+</div>
+<div id="pwned-result" class="mt-8 font-headline-md min-h-[60px]"></div>
+</div>
+</div>
+
+<aside id="main-sidebar" class="h-screen w-64 fixed left-0 top-0 border-r border-glass-stroke bg-glass-fill dark:bg-glass-fill flex flex-col backdrop-blur-[24px] shadow-[0_0_15px_rgba(50,255,126,0.1)] z-50 transition-transform duration-300 transform -translate-x-full">
+<div class="p-6 border-b border-glass-stroke flex flex-col gap-2">
+<h1 class="font-headline-md text-headline-md font-bold text-cyber-lime uppercase tracking-tighter">CYBER_OS v2.4</h1>
+<span class="font-code-sm text-code-sm text-on-surface-variant">SOC Node: Delta-9</span>
+</div>
+<nav class="flex-1 py-6 flex flex-col gap-1 overflow-y-auto" id="sidebar-nav">
+<div class="flex flex-col gap-1 mt-6">
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-cyber-lime bg-cyber-lime/10 font-bold transition-all" data-tab="tab-dashboard">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a href="#" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all border border-cyber-lime/30" data-tab="tab-agent">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-cyber-lime">psychology</span>
+<span>AI Agent Workbench</span>
+</div>
+<span class="bg-cyber-lime text-background text-[10px] font-black px-1.5 py-0.5 rounded uppercase">AGENTIC</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-url">
+<span class="material-symbols-outlined">public</span>
+<span>Threat Intelligence</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-email">
+<span class="material-symbols-outlined">mail</span>
+<span>Email Forensics</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-imap">
+<span class="material-symbols-outlined">inbox</span>
+<span>IMAP Inbox Scan</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-darkweb">
+<span class="material-symbols-outlined">password</span>
+<span>Dark Web Scanner</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-history">
+<span class="material-symbols-outlined">history</span>
+<span>Network History</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-sniffer">
+<span class="material-symbols-outlined">wifi_tethering</span>
+<span>Packet Sniffer</span>
+</a>
+</div>
+</nav>
+<div class="p-4 border-t border-glass-stroke">
+<button onclick="retrainModels()" id="btn-retrain" class="w-full bg-cyber-lime/10 text-cyber-lime border border-cyber-lime/50 hover:bg-cyber-lime hover:text-background font-label-caps text-label-caps py-2 rounded transition-all duration-200 uppercase tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">model_training</span>
+    Retrain Models
+</button>
+</div>
+<div class="mt-auto border-t border-glass-stroke bg-surface-container-lowest">
+<div class="flex flex-col gap-1 p-2">
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-cyber-lime transition-colors cursor-pointer text-xs" onclick="showSystemDiagnostics()">
+<span class="material-symbols-outlined text-sm">memory</span>
+<span class="font-label-caps text-label-caps">System Health</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-cyber-lime transition-colors cursor-pointer text-xs">
+<span class="material-symbols-outlined text-sm">analytics</span>
+<span id="ext-status-pill" class="font-label-caps text-label-caps">Checking Extension...</span>
+</div>
+</div>
+</div>
+</aside>
+
+<main id="main-content" class="ml-0 pt-16 pb-8 min-h-screen bg-background relative z-0 transition-all duration-300">
+<nav class="sticky top-16 z-30 bg-background/80 backdrop-blur-md border-b border-glass-stroke px-container-margin py-3">
+  <div class="max-w-7xl mx-auto flex items-center gap-2 font-code-sm text-xs text-on-surface-variant">
+    <span class="hover:text-cyber-lime cursor-pointer">Home</span>
+    <span class="material-symbols-outlined text-xs">chevron_right</span>
+    <span class="text-cyber-lime" id="breadcrumb-current">Dashboard</span>
+  </div>
+</nav>
+<div class="absolute inset-0 z-[-1] opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 50% 0%, rgba(50, 255, 126, 0.1) 0%, transparent 70%);"></div>
+<div class="p-container-margin max-w-7xl mx-auto flex flex-col gap-container-margin">
+
+<div id="tab-dashboard" class="tab-content block">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-glass-stroke pb-4 mb-4">
+        <div>
+        <h2 class="font-headline-lg text-headline-lg text-on-surface">Dual RandomForest Model Health</h2>
+        <p class="font-code-sm text-code-sm text-on-surface-variant mt-2">SYS_ID: RF-EN-992 // STATUS: ACTIVE_TRAINING</p>
+        </div>
+        <div class="flex gap-4">
+        <div class="bg-surface-container-highest border border-glass-stroke p-3 flex flex-col items-end min-w-[120px] rounded-lg">
+        <span class="font-label-caps text-label-caps text-on-surface-variant">Epoch</span>
+        <span class="font-data-display text-data-display text-cyber-lime">1,402 / 5,000</span>
+        </div>
+        </div>
+    </header>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        <!-- KPI Cards Bento -->
+        <div class="lg:col-span-8 flex flex-col gap-gutter">
+            <section class="bg-surface-container-lowest/50 border border-glass-stroke/30 p-4 rounded-lg">
+                <h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 px-2">Global Performance Metrics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div class="bg-glass-fill border border-glass-stroke rounded-lg p-4 relative overflow-hidden group hover:border-cyber-lime/50 transition-colors">
+                    <span class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Accuracy (Global)</span>
+                    <div class="flex items-baseline gap-2">
+                    <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-url-acc">100.0</span>
+                    <span class="font-code-sm text-code-sm text-cyber-lime">%</span>
+                    </div>
+                </div>
+                <div class="bg-glass-fill border border-glass-stroke rounded-lg p-4 relative overflow-hidden group hover:border-cyber-lime/50 transition-colors">
+                    <span class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Accuracy (Email)</span>
+                    <div class="flex items-baseline gap-2">
+                    <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-email-acc">100.0</span>
+                    <span class="font-code-sm text-code-sm text-warning-amber">%</span>
+                    </div>
+                </div>
+                <div class="bg-glass-fill border border-glass-stroke rounded-lg p-4 relative overflow-hidden group hover:border-cyber-lime/50 transition-colors">
+                    <span class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Threats Intercepted</span>
+                    <div class="flex items-baseline gap-2">
+                    <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-threats-count">142</span>
+                    </div>
+                </div>
+                </div>
+            </section>
+            <!-- Threat Map -->
+            <div class="bg-glass-fill border border-glass-stroke p-4 rounded-lg flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-label-caps text-label-caps text-cyber-lime">GEO-IP THREAT ORIGIN HEATMAP</h3>
+                </div>
+                <div id="threatMap" class="w-full border border-glass-stroke rounded" style="height: 320px; background: #0c160d;"></div>
+            </div>
+        </div>
+        
+        <!-- Right Column: Feed -->
+        <div class="lg:col-span-4 flex flex-col gap-gutter">
+            <div class="bg-glass-fill border border-glass-stroke flex flex-col flex-1 overflow-hidden rounded-lg">
+                <div class="p-4 border-b border-glass-stroke flex justify-between items-center bg-surface-container-highest">
+                    <h3 class="font-label-caps text-label-caps text-on-surface">Live Network Stream</h3>
+                    <span class="font-code-sm text-code-sm text-neon-crimson animate-pulse flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-neon-crimson rounded-full inline-block"></span> LIVE
+                    </span>
+                </div>
+                <div class="p-3 border-b border-glass-stroke/30 flex justify-around bg-surface-container-low font-code-sm text-xs">
+                    <div class="text-center"><span class="text-on-surface-variant block">Threats</span><span id="live-threats-counter" class="text-neon-crimson font-bold">0</span></div>
+                    <div class="text-center"><span class="text-on-surface-variant block">Safe</span><span id="live-safe-counter" class="text-cyber-lime font-bold">0</span></div>
+                    <div class="text-center"><span class="text-on-surface-variant block">Total</span><span id="live-total-counter" class="text-on-surface font-bold">0</span></div>
+                </div>
+                <div class="flex-1 overflow-y-auto max-h-[400px]">
+                    <table class="w-full text-left border-collapse">
+                        <tbody id="sniffer-table-body-dash" class="font-code-sm text-code-sm">
+                            <!-- Populated by JS -->
+                            <tr><td colspan="4" class="p-4 text-center text-on-surface-variant">Awaiting network events...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB: AI AGENT INVESTIGATION WORKBENCH -->
+<div id="tab-agent" class="tab-content hidden flex flex-col gap-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-glass-stroke pb-4 mb-2">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyber-lime text-background uppercase tracking-widest">BHARATAGENTIC HACKATHON</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border border-cyber-lime/40 text-cyber-lime uppercase tracking-widest">POWERED BY AIKART</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border border-surface-variant text-on-surface-variant uppercase tracking-widest">AUTONOMOUS SOC AGENT</span>
+            </div>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
+                <span class="material-symbols-outlined text-3xl text-cyber-lime animate-pulse">psychology</span>
+                AI Agent Digital Forensics Investigation Workbench
+            </h2>
+            <p class="font-code-sm text-code-sm text-on-surface-variant mt-1">
+                Autonomous First-Level Forensic Investigator // Understand &bull; Plan &bull; Select Tools &bull; Investigate &bull; Correlate &bull; Reason &bull; Recommend &bull; Report
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="downloadAgentJson()" class="bg-surface-container-high hover:bg-surface-variant text-on-surface border border-glass-stroke px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5" title="Export Investigation JSON">
+                <span class="material-symbols-outlined text-sm">download</span> JSON
+            </button>
+            <button onclick="exportAgentReport()" class="bg-cyber-lime/10 hover:bg-cyber-lime hover:text-background text-cyber-lime border border-cyber-lime px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_15px_rgba(50,255,126,0.15)]" title="Printable Executive PDF Dossier">
+                <span class="material-symbols-outlined text-sm">print</span> Print Dossier
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Evidence Ingestion & Preset Scenarios Bento Box -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        <div class="lg:col-span-12 glass-panel p-6 flex flex-col gap-5">
+            <!-- Scenario Presets Bar -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-label-caps text-label-caps text-cyber-lime flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">touch_app</span>
+                        QUICK-LOAD DEMO SCENARIOS (1-CLICK FORENSIC PRESETS):
+                    </span>
+                    <span class="text-[11px] font-code-sm text-on-surface-variant">Real-world phishing, URL, & endpoint attack vectors</span>
+                </div>
+                <div id="agent-scenarios-container" class="flex flex-wrap gap-2">
+                    <!-- Populated dynamically by agent.js from /api/agent/scenarios -->
+                </div>
+                <div id="agent-scenario-desc" class="mt-3">
+                    <!-- Scenario info card -->
+                </div>
+            </div>
+
+            <!-- Modality Selector & Evidence Input -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-8 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <label for="agent-input-data" class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">terminal</span>
+                            EVIDENCE PAYLOAD OR INVESTIGATION PROMPT
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-on-surface-variant font-code-sm">Modality:</span>
+                            <select id="agent-type-select" class="bg-surface-container-highest border border-glass-stroke text-on-surface text-xs font-code-sm px-3 py-1 rounded focus:outline-none focus:border-cyber-lime">
+                                <option value="auto">Auto-Detect Modality</option>
+                                <option value="email">RFC 822 Email (.eml / headers)</option>
+                                <option value="url">Suspicious URL / Domain</option>
+                                <option value="browser">Browser History Telemetry</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="agent-input-data" rows="7" class="w-full bg-surface-container-lowest/80 border border-glass-stroke rounded-lg text-on-surface font-code-sm text-xs p-3 focus:outline-none focus:border-cyber-lime leading-relaxed placeholder:text-on-surface-variant/40" placeholder="Paste email headers + body, target URL, or investigation request here... (Or select a 1-click preset above)"></textarea>
+                </div>
+
+                <!-- Drag & Drop Zone -->
+                <div class="lg:col-span-4 flex flex-col gap-3">
+                    <label class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">upload_file</span>
+                        UPLOAD EVIDENCE FILE
+                    </label>
+                    <div id="agent-dropzone" class="flex-1 border-2 border-dashed border-glass-stroke/50 hover:border-cyber-lime/70 rounded-lg p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-surface-container-lowest/40" onclick="document.getElementById('agent-file-input').click()">
+                        <input type="file" id="agent-file-input" class="hidden" accept=".eml,.msg,.txt,.json,.sqlite">
+                        <span class="material-symbols-outlined text-3xl text-cyber-lime mb-2">cloud_upload</span>
+                        <div class="font-bold text-xs text-on-surface">Drag &amp; Drop Evidence</div>
+                        <div class="text-[11px] text-on-surface-variant font-code-sm mt-1">.eml, .txt, .json, or browser history</div>
+                        <div class="text-[10px] text-cyber-lime/70 mt-2 font-code-sm">Click to browse local files</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Run Agent Button -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-glass-stroke/40">
+                <div class="text-xs font-code-sm text-on-surface-variant flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-cyber-lime inline-block"></span>
+                    <span>Agent will reason, formulate a tool execution plan, correlate signals, and assess threat.</span>
+                </div>
+                <button id="btn-run-agent" onclick="runAgentInvestigation()" class="w-full sm:w-auto bg-cyber-lime hover:bg-primary-fixed text-background font-black text-sm px-8 py-3 rounded-lg uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(50,255,126,0.3)] hover:scale-[1.02]">
+                    <span class="material-symbols-outlined text-lg">psychology</span>
+                    Investigate with AI Agent
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Workflow Dynamic DAG Visualization -->
+    <div class="glass-panel p-5 flex flex-col gap-3">
+        <div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-cyber-lime">schema</span>
+                <h3 class="font-headline-sm font-bold text-sm text-on-surface uppercase tracking-wider">Dynamic Agent Execution Flowchart (DAG)</h3>
+            </div>
+            <span class="text-[11px] font-code-sm text-on-surface-variant">Real-time orchestrated dependency graph</span>
+        </div>
+        <div id="agent-dag-canvas" class="min-h-[100px] flex items-center justify-center">
+            <div class="text-center text-xs text-on-surface-variant p-6 font-code-sm">
+                <span class="material-symbols-outlined text-3xl text-on-surface-variant/50 mb-2">account_tree</span>
+                <p>Execution DAG will construct dynamically when the agent plans and executes an investigation.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State Indicator -->
+    <div id="agent-loading-state" class="hidden glass-panel p-12 text-center flex flex-col items-center justify-center gap-4">
+        <div class="relative w-16 h-16 flex items-center justify-center">
+            <span class="material-symbols-outlined text-5xl text-cyber-lime animate-spin">cyclone</span>
+        </div>
+        <div class="font-headline-md font-bold text-cyber-lime">Agent Reasoner Active</div>
+        <p class="font-code-sm text-xs text-on-surface-variant max-w-md">
+            Analyzing headers, evaluating machine learning models, dynamically following embedded links, and correlating cross-source threat signals...
+        </p>
+    </div>
+
+    <!-- Results Dashboard Bento Grid -->
+    <div id="agent-results-container" class="hidden flex flex-col gap-6">
+        <!-- Row 1: Executive KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <span class="font-label-caps text-label-caps text-on-surface-variant">Assessed Threat Level</span>
+                <div class="flex items-center justify-between mt-2">
+                    <span id="agent-risk-badge" class="px-3 py-1 rounded-full font-label-caps text-label-caps font-bold">ANALYZING</span>
+                    <span id="agent-risk-score" class="font-headline-lg text-3xl font-black text-on-surface">--</span>
+                </div>
+            </div>
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <span class="font-label-caps text-label-caps text-on-surface-variant">Model Confidence</span>
+                <div class="flex items-baseline gap-1 mt-2">
+                    <span id="agent-conf-score" class="font-headline-lg text-3xl font-bold text-cyber-lime">--%</span>
+                    <span class="text-xs text-on-surface-variant font-code-sm">Certainty Index</span>
+                </div>
+            </div>
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <span class="font-label-caps text-label-caps text-on-surface-variant">Investigation Reference</span>
+                <div class="mt-2">
+                    <div id="agent-inv-id" class="font-code-sm text-xs text-cyber-lime font-bold">INV-XXXX</div>
+                    <div id="agent-inv-time" class="text-[10px] text-on-surface-variant font-code-sm">--</div>
+                </div>
+            </div>
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <span class="font-label-caps text-label-caps text-on-surface-variant">Modality Target</span>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="material-symbols-outlined text-cyber-lime text-xl">fingerprint</span>
+                    <span id="agent-inv-type" class="font-bold text-sm text-on-surface uppercase">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Human Review Warning Card -->
+        <div id="agent-human-review-card" class="glass-panel p-4 rounded-lg flex items-start gap-3">
+            <div id="agent-human-review-text" class="flex-1"></div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="glass-panel p-5 flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-cyber-lime">
+                <span class="material-symbols-outlined text-base">notes</span>
+                <h4 class="font-bold text-xs uppercase tracking-wider">Executive Threat Summary</h4>
+            </div>
+            <div id="agent-summary-text" class="text-xs font-code-sm text-on-surface leading-relaxed"></div>
+        </div>
+
+        <!-- Row 2: Decision Feed + Cross-Source Correlations -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <!-- Left: Auditable Agent Decision Feed -->
+            <div class="lg:col-span-6 glass-panel p-5 flex flex-col">
+                <div class="flex items-center justify-between border-b border-glass-stroke pb-3 mb-4">
+                    <div class="flex items-center gap-2 text-cyber-lime">
+                        <span class="material-symbols-outlined text-lg">history_edu</span>
+                        <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface">Auditable Decision Log</h4>
+                    </div>
+                    <span class="text-[10px] font-code-sm text-on-surface-variant">Traceable Tool Selections</span>
+                </div>
+                <div id="agent-decision-feed" class="flex flex-col gap-1 max-h-[420px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- Right: Cross-Source Correlations -->
+            <div class="lg:col-span-6 glass-panel p-5 flex flex-col">
+                <div class="flex items-center justify-between border-b border-glass-stroke pb-3 mb-4">
+                    <div class="flex items-center gap-2 text-[#e5c36f]">
+                        <span class="material-symbols-outlined text-lg">alt_route</span>
+                        <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface">Cross-Source Correlations (<span id="agent-correlations-count">0</span>)</h4>
+                    </div>
+                    <span class="text-[10px] font-code-sm text-on-surface-variant">Multi-Vector Threat Fusion</span>
+                </div>
+                <div id="agent-correlations-container" class="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- Row 3: Forensic Evidence Inventory Table -->
+        <div class="glass-panel p-5 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+                <div class="flex items-center gap-2 text-cyber-lime">
+                    <span class="material-symbols-outlined text-lg">fact_check</span>
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface">Forensic Evidence Inventory (<span id="agent-evidence-count">0</span>)</h4>
+                </div>
+                <span class="text-[10px] font-code-sm text-on-surface-variant">Normalized Sensor & Model Output</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-glass-stroke text-on-surface-variant font-label-caps text-label-caps">
+                            <th class="p-3">ID</th>
+                            <th class="p-3">Source Tool</th>
+                            <th class="p-3">Category</th>
+                            <th class="p-3">Indicator Target</th>
+                            <th class="p-3">Detection Result</th>
+                            <th class="p-3">Forensic Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agent-evidence-tbody" class="font-code-sm text-xs divide-y divide-glass-stroke/20"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Row 4: Actionable Incident Response Playbook -->
+        <div class="glass-panel p-5 flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-glass-stroke pb-3">
+                <div class="flex items-center gap-2 text-cyber-lime">
+                    <span class="material-symbols-outlined text-lg">security</span>
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface">Actionable Incident Response Playbook</h4>
+                </div>
+                <span class="text-[10px] font-code-sm text-on-surface-variant">Tier-1 & Tier-2 SOC Next Steps</span>
+            </div>
+            <div id="agent-recommendations-container" class="flex flex-col gap-3"></div>
+        </div>
+
+        <!-- Row 5: Extracted Indicators of Compromise (IoCs) -->
+        <div class="glass-panel p-5 flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-glass-stroke pb-2">
+                <div class="flex items-center gap-2 text-cyber-lime">
+                    <span class="material-symbols-outlined text-lg">target</span>
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface">Extracted Indicators of Compromise (IoCs)</h4>
+                </div>
+                <span class="text-[10px] font-code-sm text-on-surface-variant">Click to copy</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-surface-container-lowest/60 p-3 rounded border border-glass-stroke/40">
+                    <span class="text-[10px] font-bold text-on-surface-variant uppercase block mb-1.5">Domains</span>
+                    <div id="agent-iocs-domains" class="flex flex-wrap gap-1.5"></div>
+                </div>
+                <div class="bg-surface-container-lowest/60 p-3 rounded border border-glass-stroke/40">
+                    <span class="text-[10px] font-bold text-on-surface-variant uppercase block mb-1.5">IP Addresses</span>
+                    <div id="agent-iocs-ips" class="flex flex-wrap gap-1.5"></div>
+                </div>
+                <div class="bg-surface-container-lowest/60 p-3 rounded border border-glass-stroke/40">
+                    <span class="text-[10px] font-bold text-on-surface-variant uppercase block mb-1.5">Target URLs</span>
+                    <div id="agent-iocs-urls" class="flex flex-wrap gap-1.5"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-url" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+        <div class="bg-glass-fill border border-glass-stroke p-6 rounded-lg">
+            <h5 class="font-headline-md text-headline-md text-on-surface mb-2">Real-Time URL Risk Scanner</h5>
+            <p class="font-code-sm text-code-sm text-on-surface-variant mb-6">Analyze URL structure, WHOIS age, entropy, and keyword vectors via RandomForest.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-2 mb-6">
+                <input type="text" id="url-input" class="flex-1 bg-surface-variant/50 border border-glass-stroke rounded text-on-surface px-4 py-2 focus:outline-none focus:border-cyber-lime font-code-sm" placeholder="https://secure-update-verify.com" onkeypress="if(event.key==='Enter') analyzeUrl()">
+                <button onclick="analyzeUrl()" class="bg-cyber-lime text-background font-label-caps text-label-caps px-6 py-2 rounded hover:bg-primary-fixed transition-colors tracking-widest">ANALYZE</button>
+            </div>
+            
+            <div class="mb-6">
+                <span class="font-label-caps text-label-caps text-on-surface-variant block mb-3">Quick Presets:</span>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setAndAnalyzeUrl('http://secure-update-paypal-verify.login-bank.ru/signin.php')" class="border border-neon-crimson text-neon-crimson px-3 py-1 rounded font-code-sm text-xs hover:bg-neon-crimson/10">PayPal Phish</button>
+                    <button onclick="setAndAnalyzeUrl('http://185.220.101.42/payload/agent_update.exe')" class="border border-neon-crimson text-neon-crimson px-3 py-1 rounded font-code-sm text-xs hover:bg-neon-crimson/10">IP Payload</button>
+                    <button onclick="setAndAnalyzeUrl('https://www.github.com/torvalds/linux')" class="border border-cyber-lime text-cyber-lime px-3 py-1 rounded font-code-sm text-xs hover:bg-cyber-lime/10">GitHub</button>
+                </div>
+            </div>
+            
+            <div class="pt-4 border-t border-glass-stroke/50">
+                <span class="font-label-caps text-label-caps text-on-surface-variant block mb-3">Model Feature Contributions</span>
+                <div style="height: 200px;"><canvas id="urlFeatureChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div id="url-result-box" class="bg-glass-fill border border-glass-stroke p-6 rounded-lg flex flex-col justify-center min-h-[400px] transition-all duration-300">
+            <div id="url-empty-state" class="text-center">
+                <span class="material-symbols-outlined text-6xl text-surface-variant mb-4">radar</span>
+                <h5 class="font-headline-md text-headline-md text-on-surface-variant">Awaiting Target URL</h5>
+            </div>
+            
+            <div id="url-report-content" class="hidden flex flex-col h-full">
+                <div class="flex justify-between items-start border-b border-glass-stroke/50 pb-4 mb-4">
+                    <div>
+                        <span id="url-risk-badge" class="px-3 py-1 rounded font-label-caps text-label-caps bg-error-container text-neon-crimson border border-error/20">HIGH RISK</span>
+                        <h4 id="url-display-target" class="mt-3 font-code-sm text-on-surface break-all">http://target.url</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-label-caps text-label-caps text-on-surface-variant block">Score</span>
+                        <span id="url-prob-score" class="font-headline-lg text-headline-lg text-neon-crimson">88.5%</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <span class="font-label-caps text-label-caps text-cyber-lime block mb-2">Threat Factors</span>
+                    <ul id="url-risk-factors-list" class="flex flex-col gap-2 font-code-sm text-sm text-on-surface-variant"></ul>
+                </div>
+                
+                <div id="url-shap-container" class="hidden mb-4 p-4 bg-surface-container-highest border border-glass-stroke rounded">
+                    <div class="glass-panel p-6 flex flex-col gap-4">
+<h3 class="font-headline-sm font-bold uppercase tracking-widest text-on-surface-variant mb-2 border-b border-glass-stroke pb-2">VirusTotal Consensus</h3>
+<div id="vt-content" class="text-on-surface-variant">Waiting for analysis...</div>
+</div>
+
+<div class="glass-panel p-6 flex flex-col gap-4">
+<h3 class="font-headline-sm font-bold uppercase tracking-widest text-on-surface-variant mb-2 border-b border-glass-stroke pb-2">SHAP Threat Factors</h3>
+<div id="url-shap-bars" class="flex flex-col gap-3 font-code-sm"></div>
+</div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 font-code-sm text-xs mt-auto">
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Domain Age</span><span id="url-feat-age" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Contains IP?</span><span id="url-feat-ip" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Subdomains</span><span id="url-feat-sub" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Entropy</span><span id="url-feat-entropy" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Keywords</span><span id="url-feat-kw" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">HTTPS</span><span id="url-feat-https" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Latitude</span><span id="url-feat-lat" class="text-on-surface"></span></div>
+                    <div class="p-2 bg-surface-container-highest border border-glass-stroke rounded"><span class="text-on-surface-variant block">Longitude</span><span id="url-feat-lon" class="text-on-surface"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="tab-email" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+        <div class="lg:col-span-5 flex flex-col gap-gutter">
+            <div class="bg-glass-fill border border-glass-stroke p-6 rounded-lg">
+                <h5 class="font-headline-md text-headline-md text-on-surface mb-2">Email (.eml) Analyzer</h5>
+                <p class="font-code-sm text-code-sm text-on-surface-variant mb-6">Inspect SPF/DKIM, routing hops, and NLP body urgency.</p>
+                
+                <div onclick="document.getElementById('eml-file-input').click()" class="border-2 border-dashed border-glass-stroke hover:border-cyber-lime/50 transition-colors p-8 rounded flex flex-col items-center justify-center text-center cursor-pointer mb-6 bg-surface-container-lowest">
+                    <input type="file" id="eml-file-input" class="hidden" accept=".eml,.txt" onchange="handleFileUpload(this.files)">
+                    <span class="material-symbols-outlined text-4xl text-cyber-lime mb-2">upload_file</span>
+                    <span class="font-headline-md text-headline-md text-on-surface text-sm mb-1">Drag & Drop .eml</span>
+                    <span class="font-code-sm text-code-sm text-on-surface-variant text-xs">Or click to browse</span>
+                </div>
+                
+                <span class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Sample Emails:</span>
+                <div id="sample-emails-list" class="flex flex-col gap-2 font-code-sm text-sm">
+                    <span class="text-on-surface-variant">Loading samples...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="lg:col-span-7 bg-glass-fill border border-glass-stroke p-6 rounded-lg flex flex-col min-h-[400px]">
+            <div id="email-empty-state" class="text-center my-auto">
+                <span class="material-symbols-outlined text-6xl text-surface-variant mb-4">mail</span>
+                <h5 class="font-headline-md text-headline-md text-on-surface-variant">No Email Loaded</h5>
+            </div>
+            
+            <div id="email-report-content" class="hidden flex flex-col h-full">
+                <div class="flex justify-between items-start border-b border-glass-stroke/50 pb-4 mb-4">
+                    <div>
+                        <span id="email-risk-badge" class="px-3 py-1 rounded font-label-caps text-label-caps bg-error-container text-neon-crimson border border-error/20">HIGH RISK</span>
+                        <h4 id="email-display-name" class="mt-3 font-code-sm text-on-surface font-bold">file.eml</h4>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-label-caps text-label-caps text-on-surface-variant block">Score</span>
+                        <span id="email-prob-score" class="font-headline-lg text-headline-lg text-neon-crimson">94.2%</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-4 font-code-sm text-xs">
+                    <div class="px-3 py-2 border border-glass-stroke rounded bg-surface-container-highest flex gap-2"><span class="text-on-surface-variant">SPF:</span><span id="badge-spf" class="font-bold"></span></div>
+                    <div class="px-3 py-2 border border-glass-stroke rounded bg-surface-container-highest flex gap-2"><span class="text-on-surface-variant">DKIM:</span><span id="badge-dkim" class="font-bold"></span></div>
+                    <div class="px-3 py-2 border border-glass-stroke rounded bg-surface-container-highest flex gap-2"><span class="text-on-surface-variant">HOPS:</span><span id="badge-hops" class="text-cyber-lime font-bold"></span></div>
+                    <div class="px-3 py-2 border border-glass-stroke rounded bg-surface-container-highest flex gap-2"><span class="text-on-surface-variant">URGENCY:</span><span id="badge-urgency" class="text-warning-amber font-bold"></span></div>
+                </div>
+                
+                <table class="w-full text-left font-code-sm text-xs border-collapse mb-4">
+                    <tbody>
+                        <tr class="border-b border-glass-stroke/30"><td class="p-2 text-on-surface-variant">From</td><td id="tbl-from" class="p-2 text-on-surface"></td></tr>
+                        <tr class="border-b border-glass-stroke/30"><td class="p-2 text-on-surface-variant">Return-Path</td><td id="tbl-return" class="p-2 text-warning-amber"></td></tr>
+                        <tr class="border-b border-glass-stroke/30"><td class="p-2 text-on-surface-variant">Subject</td><td id="tbl-subject" class="p-2 text-on-surface font-bold"></td></tr>
+                        <tr class="border-b border-glass-stroke/30"><td class="p-2 text-on-surface-variant">IPs Found</td><td id="tbl-ips" class="p-2 text-on-surface"></td></tr>
+                    </tbody>
+                </table>
+                
+                <div class="mb-4">
+                    <span class="font-label-caps text-label-caps text-neon-crimson block mb-2">Threat Indicators</span>
+                    <ul id="email-threat-list" class="flex flex-col gap-1 font-code-sm text-xs text-on-surface-variant"></ul>
+                </div>
+                
+                <div id="email-shap-container" class="hidden mb-4 p-4 bg-surface-container-highest border border-glass-stroke rounded">
+                    <span class="font-label-caps text-label-caps text-cyan block mb-2">SHAP Force Breakdown</span>
+                    <div id="email-shap-bars" class="flex flex-col gap-2 font-code-sm text-xs"></div>
+                </div>
+                
+                <div class="mt-auto">
+                    <span class="font-label-caps text-label-caps text-on-surface-variant block mb-2">Body Extract</span>
+                    <div id="email-body-preview" class="p-3 bg-surface-container-lowest border border-glass-stroke rounded font-code-sm text-xs text-on-surface-variant max-h-32 overflow-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TAB: NETWORK HISTORY -->
+<div id="tab-history" class="tab-content hidden max-w-7xl mx-auto px-container-margin py-8">
+    <div class="flex items-center gap-4 mb-8">
+        <span class="material-symbols-outlined text-4xl text-cyber-lime">history</span>
+        <h2 class="font-headline-lg text-headline-lg font-black tracking-widest uppercase">Network History</h2>
+    </div>
+    <div class="bg-glass-fill border border-glass-stroke p-6 rounded-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+                <h5 class="font-headline-md text-headline-md text-on-surface mb-1">Browser History Threat Hunter</h5>
+                <p class="font-code-sm text-code-sm text-on-surface-variant">Captures live open tabs or scans local SQLite databases.</p>
+            </div>
+            <div class="flex gap-2 font-code-sm">
+                <input type="text" id="history-search-input" class="bg-surface-variant/50 border border-glass-stroke rounded text-on-surface px-3 py-1" placeholder="Filter..." oninput="filterBrowserHistory()">
+                <select id="history-browser-select" class="bg-surface-variant/50 border border-glass-stroke rounded text-on-surface px-3 py-1" onchange="loadBrowserHistory()">
+                    <option value="all">Auto (Live)</option>
+                    <option value="live_all">Live: Tabs + History</option>
+                    <option value="chrome">SQLite Scan: Chrome</option>
+                    <option value="edge">SQLite Scan: Edge</option>
+                </select>
+                <button onclick="sortHistoryByScore()" class="px-3 py-1 border border-glass-stroke rounded text-on-surface-variant hover:text-on-surface">Sort</button>
+                <button onclick="loadBrowserHistory()" class="px-3 py-1 bg-cyber-lime text-background rounded font-bold">Scan</button>
+            </div>
+        </div>
+        <div class="overflow-x-auto min-h-[400px]">
+            <table class="w-full text-left border-collapse">
+                <thead class="font-label-caps text-label-caps text-on-surface-variant border-b border-glass-stroke">
+                    <tr><th class="p-2">Status</th><th class="p-2">Score</th><th class="p-2">URL</th><th class="p-2">Title</th><th class="p-2">Time</th><th class="p-2">Action</th></tr>
+                </thead>
+                <tbody id="history-table-body" class="font-code-sm text-code-sm">
+                    <tr><td colspan="6" class="p-4 text-center text-on-surface-variant mt-10">Click Scan to begin...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- TAB: PACKET SNIFFER -->
+<div id="tab-sniffer" class="tab-content hidden max-w-7xl mx-auto px-container-margin py-8">
+    <div class="flex items-center gap-4 mb-8">
+        <span class="material-symbols-outlined text-4xl text-cyber-lime">wifi_tethering</span>
+        <h2 class="font-headline-lg text-headline-lg font-black tracking-widest uppercase">Live Packet Sniffer</h2>
+    </div>
+    <div class="bg-glass-fill border border-glass-stroke p-6 rounded-lg flex flex-col gap-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <p class="font-code-sm text-code-sm text-on-surface-variant mb-4">Real-time DNS & HTTP capture via Tshark/fallback.</p>
+                <div class="flex gap-4 items-center">
+                    <select id="sniffer-timeout" class="w-48 bg-surface-variant/50 border border-glass-stroke rounded text-on-surface px-3 py-2 font-code-sm">
+                        <option value="4">4 Seconds</option>
+                        <option value="8" selected>8 Seconds</option>
+                        <option value="15">15 Seconds</option>
+                    </select>
+                    <button id="btn-start-sniff" onclick="startPacketCapture()" class="bg-cyber-lime text-background font-label-caps px-6 py-2 rounded font-bold tracking-wider hover:bg-opacity-80 transition-colors">START BATCH CAPTURE</button>
+                    <button id="btn-stream-sniff" onclick="toggleWebSocketStream()" class="border border-neon-crimson text-neon-crimson font-label-caps px-6 py-2 rounded font-bold tracking-wider hover:bg-neon-crimson/10 transition-colors">START WEBSOCKET STREAM</button>
+                </div>
+            </div>
+            <div class="p-3 bg-surface-container-highest border border-glass-stroke rounded font-code-sm text-sm text-on-surface-variant min-w-[300px] text-center" id="sniffer-mode-text">
+                Ready to capture...
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[400px]">
+            <div class="flex flex-col bg-surface-variant/30 border border-glass-stroke rounded p-4">
+                <h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4">Live Telemetry</h3>
+                <div class="flex-1 w-full" style="min-height: 250px;"><canvas id="snifferTimelineChart"></canvas></div>
+            </div>
+            <div class="flex flex-col bg-surface-variant/30 border border-glass-stroke rounded p-4">
+                <h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4">Intercepted Packets</h3>
+                <div class="flex-1 overflow-y-auto max-h-[500px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="font-label-caps text-label-caps text-on-surface-variant border-b border-glass-stroke">
+                            <tr><th class="p-2">Flag</th><th class="p-2">Score</th><th class="p-2">URI</th><th class="p-2">Analyze</th></tr>
+                        </thead>
+                        <tbody id="sniffer-table-body" class="font-code-sm text-code-sm">
+                            <tr><td colspan="4" class="p-4 text-center text-on-surface-variant mt-10">Awaiting packets...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+</main>
+
+<footer id="main-footer" class="fixed bottom-0 right-0 left-0 h-8 border-t border-glass-stroke bg-surface-container-lowest flex items-center justify-between px-gutter w-full z-40 overflow-hidden transition-all duration-300">
+<span class="font-code-sm text-cyber-lime whitespace-nowrap opacity-80">© 2026 OBSIDIAN FORENSICS</span>
+<div class="flex gap-8 whitespace-nowrap overflow-hidden relative flex-1 ml-8">
+<div class="marquee-scroll flex gap-8 font-label-caps text-label-caps text-on-surface-variant w-full">
+<span class="hover:text-cyber-lime transition-colors">Network Event Stream: Active</span>
+<span class="hover:text-cyber-lime transition-colors">Database: Synchronized</span>
+<span class="hover:text-cyber-lime transition-colors">Model Health: Optimal</span>
+</div>
+</div>
+</footer>
+
+<!-- Modals (Custom Vanilla HTML/Tailwind) -->
+<div id="diagModal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-surface-container border border-glass-stroke p-6 rounded-lg max-w-lg w-full">
+        <h5 class="font-headline-md text-cyber-lime mb-4">System Health Diagnostics</h5>
+        <div class="p-4 bg-surface-container-lowest border border-glass-stroke rounded font-code-sm text-sm text-on-surface flex flex-col gap-2">
+            <p class="text-cyber-lime">✔ RandomForest URL Model: 100 Estimators (Active)</p>
+            <p class="text-cyber-lime">✔ RandomForest Email Model: 100 Estimators (Active)</p>
+            <p class="text-on-surface">✔ Network Sniffer Engine: Loaded</p>
+        </div>
+        <button onclick="document.getElementById('diagModal').classList.add('hidden')" class="mt-6 px-4 py-2 border border-glass-stroke text-on-surface rounded hover:bg-surface-variant">Close</button>
+    </div>
+</div>
+
+<div id="highRiskModal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex items-center justify-center backdrop-blur-md">
+    <div class="bg-surface-container border border-neon-crimson p-6 rounded-lg max-w-lg w-full shadow-[0_0_40px_rgba(255,63,52,0.4)]">
+        <h5 class="font-headline-md text-neon-crimson mb-4 flex items-center gap-2"><span class="material-symbols-outlined">warning</span> HIGH RISK DETECTED</h5>
+        <div class="p-4 bg-error-container/20 border border-neon-crimson rounded font-code-sm text-sm text-on-surface flex flex-col gap-2 mb-4">
+            <p id="highRiskModalUrl" class="text-neon-crimson font-bold break-all"></p>
+            <p id="highRiskModalTitle" class="text-on-surface-variant"></p>
+        </div>
+        <p class="font-code-sm text-xs text-on-surface-variant mb-6">Immediate inspection is recommended!</p>
+        <div class="flex justify-end gap-3">
+            <button onclick="document.getElementById('highRiskModal').classList.add('hidden')" class="px-4 py-2 border border-glass-stroke text-on-surface rounded hover:bg-surface-variant">Dismiss</button>
+            <button id="highRiskModalInspectBtn" class="px-4 py-2 bg-neon-crimson text-white rounded font-bold">Inspect Threat</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/chart.min.js?v=8"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/js/dashboard.js?v=11"></script>
+<script src="/static/js/agent.js?v=1"></script>
+</body></html>
+
+

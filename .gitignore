@@ -1,0 +1,24 @@
+# Virtual environments & nested duplicate directory
+.venv/
+venv/
+env/
+**/.venv/
+**/venv/
+Forensic-Engine-main/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# IDE & Editor artifacts
+.vscode/
+.idea/
+.gemini/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
