@@ -1,7 +1,7 @@
 <!DOCTYPE html><html class="dark" lang="en"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Threat Intelligence &amp; Model Training Hub</title>
+<title>FORENSIC ENGINE</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
@@ -107,7 +107,7 @@
 <button id="sidebar-toggle" class="text-on-surface-variant hover:text-cyber-lime transition-colors">
 <span class="material-symbols-outlined text-2xl">menu</span>
 </button>
-<span class="font-headline-md text-headline-md font-black text-on-surface tracking-widest uppercase">FORENSIC_ENGINE</span>
+<span class="font-headline-md text-headline-md font-black text-on-surface tracking-widest uppercase">FORENSIC ENGINE</span>
 </div>
 <div class="flex items-center gap-6">
 <div class="relative hidden md:block">
@@ -175,8 +175,8 @@
 
 <aside id="main-sidebar" class="h-screen w-64 fixed left-0 top-0 border-r border-glass-stroke bg-glass-fill dark:bg-glass-fill flex flex-col backdrop-blur-[24px] shadow-[0_0_15px_rgba(50,255,126,0.1)] z-50 transition-transform duration-300 transform -translate-x-full">
 <div class="p-6 border-b border-glass-stroke flex flex-col gap-2">
-<h1 class="font-headline-md text-headline-md font-bold text-cyber-lime uppercase tracking-tighter">CYBER_OS v2.4</h1>
-<span class="font-code-sm text-code-sm text-on-surface-variant">SOC Node: Delta-9</span>
+<h1 class="font-headline-md text-headline-md font-bold text-cyber-lime uppercase tracking-tighter">FORENSIC ENGINE</h1>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Digital Forensics Platform</span>
 </div>
 <nav class="flex-1 py-6 flex flex-col gap-1 overflow-y-auto" id="sidebar-nav">
 <div class="flex flex-col gap-1 mt-6">
@@ -187,17 +187,25 @@
 <a href="#" class="sidebar-link flex items-center justify-between px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all border border-cyber-lime/30" data-tab="tab-agent">
 <div class="flex items-center gap-4">
 <span class="material-symbols-outlined text-cyber-lime">psychology</span>
-<span>AI Agent Workbench</span>
+<span>AI Agent Investigation</span>
 </div>
 <span class="bg-cyber-lime text-background text-[10px] font-black px-1.5 py-0.5 rounded uppercase">AGENTIC</span>
 </a>
 <a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-url">
 <span class="material-symbols-outlined">public</span>
-<span>Threat Intelligence</span>
+<span>URL Analysis</span>
 </a>
 <a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-email">
 <span class="material-symbols-outlined">mail</span>
-<span>Email Forensics</span>
+<span>Email Analysis</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-history">
+<span class="material-symbols-outlined">history</span>
+<span>Browser History</span>
+</a>
+<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-inv-history">
+<span class="material-symbols-outlined">manage_search</span>
+<span>Investigation History</span>
 </a>
 <a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-imap">
 <span class="material-symbols-outlined">inbox</span>
@@ -206,10 +214,6 @@
 <a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-darkweb">
 <span class="material-symbols-outlined">password</span>
 <span>Dark Web Scanner</span>
-</a>
-<a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-history">
-<span class="material-symbols-outlined">history</span>
-<span>Network History</span>
 </a>
 <a href="#" class="sidebar-link flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all" data-tab="tab-sniffer">
 <span class="material-symbols-outlined">wifi_tethering</span>
@@ -273,7 +277,7 @@
         <div class="bg-surface-container border border-glass-stroke rounded-xl p-5 flex flex-col justify-between hover:border-cyber-lime/40 transition-colors">
             <span class="font-label-caps text-[11px] text-on-surface-variant uppercase tracking-wider">Total Investigations</span>
             <div class="flex items-baseline gap-2 mt-3">
-                <span class="font-data-display text-3xl md:text-4xl font-black text-on-surface" id="dash-stat-total">24</span>
+                <span class="font-data-display text-3xl md:text-4xl font-black text-on-surface" id="dash-stat-total">0</span>
                 <span class="font-code-sm text-xs text-on-surface-variant">total</span>
             </div>
         </div>
@@ -285,7 +289,7 @@
                 <span class="w-2 h-2 rounded-full bg-cyber-lime"></span>
             </span>
             <div class="flex items-baseline gap-2 mt-3">
-                <span class="font-data-display text-3xl md:text-4xl font-black text-cyber-lime" id="dash-stat-low">12</span>
+                <span class="font-data-display text-3xl md:text-4xl font-black text-cyber-lime" id="dash-stat-low">0</span>
                 <span class="font-code-sm text-xs text-cyber-lime/70">safe</span>
             </div>
         </div>
@@ -297,7 +301,7 @@
                 <span class="w-2 h-2 rounded-full bg-warning-amber"></span>
             </span>
             <div class="flex items-baseline gap-2 mt-3">
-                <span class="font-data-display text-3xl md:text-4xl font-black text-warning-amber" id="dash-stat-med">6</span>
+                <span class="font-data-display text-3xl md:text-4xl font-black text-warning-amber" id="dash-stat-med">0</span>
                 <span class="font-code-sm text-xs text-warning-amber/70">elevated</span>
             </div>
         </div>
@@ -309,7 +313,7 @@
                 <span class="w-2 h-2 rounded-full bg-orange-400"></span>
             </span>
             <div class="flex items-baseline gap-2 mt-3">
-                <span class="font-data-display text-3xl md:text-4xl font-black text-orange-400" id="dash-stat-high">4</span>
+                <span class="font-data-display text-3xl md:text-4xl font-black text-orange-400" id="dash-stat-high">0</span>
                 <span class="font-code-sm text-xs text-orange-400/70">actionable</span>
             </div>
         </div>
@@ -321,7 +325,7 @@
                 <span class="w-2 h-2 rounded-full bg-neon-crimson"></span>
             </span>
             <div class="flex items-baseline gap-2 mt-3">
-                <span class="font-data-display text-3xl md:text-4xl font-black text-neon-crimson" id="dash-stat-crit">2</span>
+                <span class="font-data-display text-3xl md:text-4xl font-black text-neon-crimson" id="dash-stat-crit">0</span>
                 <span class="font-code-sm text-xs text-neon-crimson/70">immediate</span>
             </div>
         </div>
@@ -335,7 +339,7 @@
                 <h2 class="font-headline-md text-base font-bold text-on-surface tracking-wide">Recent Investigations</h2>
             </div>
             <span class="font-code-sm text-xs text-on-surface-variant flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-cyber-lime"></span> Live Audit Trail
+                <span class="w-1.5 h-1.5 rounded-full bg-cyber-lime"></span> Real-time Audit Trail
             </span>
         </div>
         <div class="overflow-x-auto">
@@ -350,46 +354,18 @@
                     </tr>
                 </thead>
                 <tbody id="dash-recent-investigations" class="divide-y divide-glass-stroke/30">
-                    <tr class="hover:bg-surface-container-high/40 transition-colors">
-                        <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
-                            <span class="material-symbols-outlined text-sm text-cyber-lime">mail</span>
-                            <span>suspicious-email</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">Email Artifact</td>
-                        <td class="py-3.5 px-6">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">HIGH</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs">2 min ago</td>
-                        <td class="py-3.5 px-6 text-right">
-                            <button onclick="launchPresetInvestigation('phish_apple_locked')" class="text-xs text-cyber-lime hover:underline font-bold">Inspect &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-surface-container-high/40 transition-colors">
-                        <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
-                            <span class="material-symbols-outlined text-sm text-cyber-lime">public</span>
-                            <span>example-url</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">URL Analysis</td>
-                        <td class="py-3.5 px-6">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-cyber-lime/20 text-cyber-lime border border-cyber-lime/30">LOW</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs">10 min ago</td>
-                        <td class="py-3.5 px-6 text-right">
-                            <button onclick="launchPresetInvestigation('malicious_url_paypal')" class="text-xs text-cyber-lime hover:underline font-bold">Inspect &rarr;</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-surface-container-high/40 transition-colors">
-                        <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
-                            <span class="material-symbols-outlined text-sm text-cyber-lime">history</span>
-                            <span>browser-history</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">Endpoint SQLite</td>
-                        <td class="py-3.5 px-6">
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-warning-amber/20 text-warning-amber border border-warning-amber/30">MEDIUM</span>
-                        </td>
-                        <td class="py-3.5 px-6 text-on-surface-variant text-xs">18 min ago</td>
-                        <td class="py-3.5 px-6 text-right">
-                            <button onclick="launchPresetInvestigation('browser_history_leak')" class="text-xs text-cyber-lime hover:underline font-bold">Inspect &rarr;</button>
+                    <tr>
+                        <td colspan="5" class="py-12 px-6 text-center text-on-surface-variant font-code-sm">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-surface-container-high border border-glass-stroke flex items-center justify-center text-on-surface-variant/70">
+                                    <span class="material-symbols-outlined text-2xl">manage_search</span>
+                                </div>
+                                <div class="font-bold text-base text-on-surface">No investigations yet.</div>
+                                <p class="text-xs text-on-surface-variant max-w-md">No investigation history available. Start your first investigation.</p>
+                                <button onclick="switchTab('tab-agent')" class="mt-2 text-xs font-bold text-cyber-lime hover:underline flex items-center gap-1.5">
+                                    Start your first investigation <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -413,8 +389,8 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-glass-stroke pb-4 mb-2">
         <div>
             <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyber-lime text-background uppercase tracking-widest">BHARATAGENTIC HACKATHON</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold border border-cyber-lime/40 text-cyber-lime uppercase tracking-widest">POWERED BY AIKART</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-cyber-lime text-background uppercase tracking-widest">FORENSIC ENGINE</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold border border-cyber-lime/40 text-cyber-lime uppercase tracking-widest">DIGITAL FORENSICS AI</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold border border-surface-variant text-on-surface-variant uppercase tracking-widest">AUTONOMOUS SOC AGENT</span>
             </div>
             <h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-3">
@@ -443,7 +419,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="font-label-caps text-label-caps text-cyber-lime flex items-center gap-1.5">
                         <span class="material-symbols-outlined text-sm">touch_app</span>
-                        QUICK-LOAD DEMO SCENARIOS (1-CLICK FORENSIC PRESETS):
+                        FORENSIC INVESTIGATION PRESETS (1-CLICK FORENSIC SCENARIOS):
                     </span>
                     <span class="text-[11px] font-code-sm text-on-surface-variant">Real-world phishing, URL, & endpoint attack vectors</span>
                 </div>
@@ -908,11 +884,84 @@
     </div>
 </div>
 
+<!-- TAB: INVESTIGATION HISTORY -->
+<div id="tab-inv-history" class="tab-content hidden max-w-7xl mx-auto px-container-margin py-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-glass-stroke pb-5">
+        <div>
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-3xl text-cyber-lime">manage_search</span>
+                <h2 class="font-headline-lg text-2xl md:text-3xl font-black text-on-surface tracking-widest uppercase">Investigation History</h2>
+            </div>
+            <p class="font-code-sm text-xs text-on-surface-variant mt-1">Real-time audit log of user-initiated digital forensic investigations</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="loadInvestigationHistory()" class="bg-surface-container-high hover:bg-surface-variant text-on-surface border border-glass-stroke px-4 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">refresh</span> Refresh
+            </button>
+            <button onclick="clearInvestigationHistory()" class="bg-neon-crimson/10 hover:bg-neon-crimson hover:text-white text-neon-crimson border border-neon-crimson/40 px-3 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-wider flex items-center gap-1.5" title="Clear all investigation records">
+                <span class="material-symbols-outlined text-sm">delete_sweep</span> Clear History
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="glass-panel p-4 mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div class="relative w-full sm:w-80">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input type="text" id="inv-history-search" oninput="renderInvestigationHistoryTable()" class="w-full bg-surface-container-lowest/80 border border-glass-stroke rounded text-on-surface pl-9 pr-4 py-2 focus:outline-none focus:border-cyber-lime text-code-sm font-code-sm" placeholder="Filter by target, ID, or keywords...">
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <span class="text-xs text-on-surface-variant font-code-sm uppercase tracking-wider">Risk Level:</span>
+            <select id="inv-history-filter-risk" onchange="renderInvestigationHistoryTable()" class="bg-surface-container-lowest border border-glass-stroke text-on-surface text-xs font-code-sm px-3 py-2 rounded focus:outline-none focus:border-cyber-lime">
+                <option value="ALL">All Risk Levels</option>
+                <option value="CRITICAL">Critical Risk</option>
+                <option value="HIGH">High Risk</option>
+                <option value="MEDIUM">Medium Risk</option>
+                <option value="LOW">Low Risk</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Full Table -->
+    <div class="bg-surface-container border border-glass-stroke rounded-xl overflow-hidden shadow-lg">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-code-sm text-sm border-collapse">
+                <thead>
+                    <tr class="border-b border-glass-stroke/40 text-on-surface-variant text-[11px] uppercase tracking-wider bg-surface-container-lowest/50">
+                        <th class="py-3.5 px-6">Investigation ID</th>
+                        <th class="py-3.5 px-6">Target / Subject</th>
+                        <th class="py-3.5 px-6">Investigation Type</th>
+                        <th class="py-3.5 px-6">Risk Level</th>
+                        <th class="py-3.5 px-6">Timestamp</th>
+                        <th class="py-3.5 px-6 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="inv-history-table-body" class="divide-y divide-glass-stroke/30">
+                    <tr>
+                        <td colspan="6" class="py-12 px-6 text-center text-on-surface-variant font-code-sm">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-surface-container-high border border-glass-stroke flex items-center justify-center text-on-surface-variant/70">
+                                    <span class="material-symbols-outlined text-2xl">folder_open</span>
+                                </div>
+                                <div class="font-bold text-base text-on-surface">No investigations yet.</div>
+                                <p class="text-xs text-on-surface-variant max-w-md">No investigation history available. Start your first investigation.</p>
+                                <button onclick="switchTab('tab-agent')" class="mt-2 text-xs font-bold text-cyber-lime hover:underline flex items-center gap-1.5">
+                                    Start your first investigation <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 </div>
 </main>
 
 <footer id="main-footer" class="fixed bottom-0 right-0 left-0 h-8 border-t border-glass-stroke bg-surface-container-lowest flex items-center justify-between px-gutter w-full z-40 overflow-hidden transition-all duration-300">
-<span class="font-code-sm text-cyber-lime whitespace-nowrap opacity-80">© 2026 OBSIDIAN FORENSICS</span>
+<span class="font-code-sm text-cyber-lime whitespace-nowrap opacity-80">© 2026 FORENSIC ENGINE</span>
 <div class="flex gap-8 whitespace-nowrap overflow-hidden relative flex-1 ml-8">
 <div class="marquee-scroll flex gap-8 font-label-caps text-label-caps text-on-surface-variant w-full">
 <span class="hover:text-cyber-lime transition-colors">Network Event Stream: Active</span>

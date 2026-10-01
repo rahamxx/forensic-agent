@@ -2,7 +2,7 @@
 FROM python:3.11-slim-bookworm
 
 # Metadata
-LABEL maintainer="BharatAgentic Hackathon Team"
+LABEL maintainer="FORENSIC ENGINE Team"
 LABEL description="AI-Powered Digital Forensics Investigation Agent"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

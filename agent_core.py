@@ -1,6 +1,6 @@
 """
 AI Forensic Investigation Agent - Core Orchestration & Reasoning Engine
-BharatAgentic Hackathon - Digital Forensics Investigation Agent
+FORENSIC ENGINE - Digital Forensics Investigation Agent
 
 This module implements the autonomous agent decision layer:
 - Understands investigation requests & inspects available evidence

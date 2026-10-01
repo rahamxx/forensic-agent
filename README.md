@@ -1,6 +1,6 @@
-# CyberPulse AI - Autonomous Digital Forensics Investigation Agent
+# FORENSIC ENGINE - Autonomous Digital Forensics Investigation Agent
 ### *Next-Gen AI SOC Analyst & Multi-Source Digital Forensics Orchestrator*
-**Built for the BharatAgentic Hackathon powered by aiKart**
+**Enterprise Digital Forensics & Incident Response Platform**
 
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Framework-Flask%20%2B%20SocketIO-000000.svg?style=flat&logo=flask)](https://flask.palletsprojects.com)
@@ -11,11 +11,11 @@
 
 ---
 
-## 1. Project Overview & Hackathon Alignment
+## 1. Project Overview
 
-**CyberPulse AI** is a production-grade **AI-Powered Digital Forensics Investigation Agent** developed for the **BharatAgentic Hackathon powered by aiKart**. 
+**FORENSIC ENGINE** is a production-grade **AI-Powered Digital Forensics Investigation Agent**.
 
-Unlike conventional chatbots, alert-filtering rules, or isolated ML predictors, CyberPulse AI acts as an **autonomous Level-1 Digital Forensics & Incident Response (DFIR) Investigator**. It dynamically plans investigations, autonomously invokes specialized forensic tools, follows newly discovered evidentiary leads (e.g., auto-extracting and deep-scanning hyperlinks found in suspicious emails), correlates cross-source findings, maps threats to **MITRE ATT&CK**, evaluates transparent risk scores, and generates actionable, human-in-the-loop Incident Response (IR) containment playbooks.
+Unlike conventional chatbots, alert-filtering rules, or isolated ML predictors, FORENSIC ENGINE acts as an **autonomous Level-1 Digital Forensics & Incident Response (DFIR) Investigator**. It dynamically plans investigations, autonomously invokes specialized forensic tools, follows newly discovered evidentiary leads (e.g., auto-extracting and deep-scanning hyperlinks found in suspicious emails), correlates cross-source findings, maps threats to **MITRE ATT&CK**, evaluates transparent risk scores, and generates actionable, human-in-the-loop Incident Response (IR) containment playbooks.
 
 ---
 
@@ -33,7 +33,7 @@ Modern Security Operations Centers (SOCs) and cyber forensic teams face an unpre
 
 ## 3. The Agentic Solution
 
-**CyberPulse AI** fundamentally transforms digital forensics triage from manual multi-tool clicking into an **autonomous agentic investigation loop**:
+**Forensic Engine** fundamentally transforms digital forensics triage from manual multi-tool clicking into an **autonomous agentic investigation loop**:
 
 $$\textbf{Understand} \longrightarrow \textbf{Plan} \longrightarrow \textbf{Select Tools} \longrightarrow \textbf{Investigate} \longrightarrow \textbf{Correlate} \longrightarrow \textbf{Reason} \longrightarrow \textbf{Recommend} \longrightarrow \textbf{Report}$$
 
@@ -50,7 +50,7 @@ $$\textbf{Understand} \longrightarrow \textbf{Plan} \longrightarrow \textbf{Sele
 
 ## 4. Why It Is Agentic (Not Just a Chatbot)
 
-| Feature | Conventional Chatbot / LLM Wrapper | Static Detection Pipeline | CyberPulse AI Agent |
+| Feature | Conventional Chatbot / LLM Wrapper | Static Detection Pipeline | Forensic Engine Agent |
 | :--- | :--- | :--- | :--- |
 | **Execution Model** | Static text prompt $\rightarrow$ text response | Hardcoded sequential scripts | **Autonomous Observe $\rightarrow$ Plan $\rightarrow$ Act loop** |
 | **Tool Usage** | None or simulated text calls | Runs all scripts unconditionally | **Dynamic tool selection based on evidence type & intermediate findings** |
@@ -229,7 +229,7 @@ The agent coordinates four specialized forensic tools exposed via standard agent
 
 ## 8. Machine Learning Models & Explainability
 
-CyberPulse AI leverages dual specialized **RandomForest** classifiers with explainable AI (XAI) overlays:
+Forensic Engine leverages dual specialized **RandomForest** classifiers with explainable AI (XAI) overlays:
 
 | Model | Target Artifact | Input Vector Size | Key Features | Explainability |
 | :--- | :--- | :--- | :--- | :--- |
@@ -242,7 +242,7 @@ CyberPulse AI leverages dual specialized **RandomForest** classifiers with expla
 
 ## 9. Cross-Source Evidence Correlation & MITRE ATT&CK
 
-The core strength of CyberPulse AI is that it **does not treat tool outputs in isolation**. It correlates findings across multiple evidence vectors:
+The core strength of Forensic Engine is that it **does not treat tool outputs in isolation**. It correlates findings across multiple evidence vectors:
 
 ```text
 [Email Header: Spoofed From] + [Body: Urgent Wire Coercion]
@@ -276,7 +276,7 @@ The core strength of CyberPulse AI is that it **does not treat tool outputs in i
 
 ## 10. REST API Specification
 
-CyberPulse AI exposes a clean REST API for SIEM/SOAR automation, scripts, and web clients.
+Forensic Engine exposes a clean REST API for SIEM/SOAR automation, scripts, and web clients.
 
 ### Endpoint: `POST /api/agent/investigate`
 Starts an autonomous forensic investigation.
@@ -458,9 +458,9 @@ curl -f http://localhost:5000/api/agent/scenarios
 
 ---
 
-## 13. Live Demonstration Guide (Hackathon Demo)
+## 13. Live Demonstration Guide
 
-For judging and live demonstration at the **BharatAgentic Hackathon**, use the integrated **AI Agent Workbench**:
+For live demonstration and evaluation of **FORENSIC ENGINE**, use the integrated **AI Agent Workbench**:
 
 ### Step 1: Open the Workbench
 1. Navigate to **http://localhost:5000** in your web browser.
@@ -493,9 +493,9 @@ The workbench provides 5 one-click scenarios illustrating the agent's dynamic re
 
 ## 14. Measurable Operational Impact
 
-Deploying CyberPulse AI as a Tier-1 DFIR investigator yields immediate, quantifiable efficiency gains:
+Deploying Forensic Engine as a Tier-1 DFIR investigator yields immediate, quantifiable efficiency gains:
 
-| Metric | Traditional Manual Investigation | CyberPulse AI Agent | Improvement |
+| Metric | Traditional Manual Investigation | Forensic Engine Agent | Improvement |
 | :--- | :--- | :--- | :--- |
 | **Mean Time to Triage (MTTT)** | 25 – 45 minutes | **1.8 – 3.2 seconds** | **~90% Reduction** |
 | **Indicator Extraction Consistency** | Variable (analyst dependent) | **100% Deterministic & Automated** | Complete Coverage |
@@ -507,7 +507,7 @@ Deploying CyberPulse AI as a Tier-1 DFIR investigator yields immediate, quantifi
 
 ## 15. Responsible AI, Security & Human-in-the-Loop Policies
 
-CyberPulse AI adheres strictly to the highest principles of Responsible and Safe AI:
+Forensic Engine adheres strictly to the highest principles of Responsible and Safe AI:
 
 1. **Human-in-the-Loop (HITL) Enforcement**:
    - The agent **never executes destructive or perimeter actions autonomously** (such as dropping network routes, modifying production firewalls, or revoking accounts).
@@ -560,10 +560,10 @@ Forensic-Engine-main/
 
 ---
 
-## 17. Contributors & Hackathon Submission
+## 17. Platform Architecture & Standards
 
-- **Event**: BharatAgentic Hackathon powered by aiKart
-- **Track**: AI Agents for Cyber Forensics, Threat Intelligence & Digital Safety
+- **System**: FORENSIC ENGINE Enterprise Digital Forensics Platform
+- **Domain**: AI Agents for Cyber Forensics, Threat Intelligence & Digital Safety
 - **Core Technologies**: Python, Flask, SocketIO, Scikit-Learn, SHAP, Docker, TailwindCSS, Chart.js
 
-*CyberPulse AI represents a genuine step forward in autonomous cyber defense—empowering human investigators with an intelligent, tireless, and auditable AI agent partner.*
+*FORENSIC ENGINE represents a genuine step forward in autonomous cyber defense—empowering human investigators with an intelligent, tireless, and auditable AI agent partner.*

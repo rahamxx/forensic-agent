@@ -1,6 +1,6 @@
 /**
  * AI Digital Forensics Investigation Agent - Frontend Orchestration
- * BharatAgentic Hackathon powered by aiKart
+ * FORENSIC ENGINE - Enterprise Digital Forensics
  * 
  * Handles:
  * - Scenario quick-loading and evidence drag-and-drop
@@ -203,6 +203,11 @@ async function runAgentInvestigation() {
 
         // Animate workflow DAG
         animateDagNodes(report.workflow_dag, report.agent_actions);
+
+        // Refresh dashboard statistics and audit trail
+        if (typeof initDashboardOverview === 'function') {
+            initDashboardOverview();
+        }
 
     } catch (err) {
         console.error('Agent investigation error:', err);

@@ -1,4 +1,5 @@
 import os
+import json
 import glob
 import time
 import threading
@@ -238,6 +239,25 @@ def analyze_url():
         geo_data = get_geo_metadata(url, round(proba * 100, 1))
         vt_data = check_virustotal(url)
 
+        # Record real investigation
+        url_risk_level = "LOW"
+        if proba >= 0.7:
+            url_risk_level = "HIGH"
+        elif proba >= 0.35:
+            url_risk_level = "MEDIUM"
+
+        inv_id = f"INV-URL-{int(time.time()*1000)%1000000:06d}"
+        save_real_investigation({
+            'id': inv_id,
+            'target': url,
+            'display_name': url[:60],
+            'type': "URL Investigation",
+            'risk_level': url_risk_level,
+            'risk_score': round(proba * 100, 1),
+            'summary': risk_factors[0] if risk_factors else f"URL analyzed ({risk_level})",
+            'status': "Completed"
+        })
+
         return jsonify({
             'url': url,
             'prediction': pred,
@@ -317,7 +337,7 @@ def analyze_email():
         sender_domain = feat_dict.get('from_header', 'sender.org')
         geo_data = get_geo_metadata(sender_domain, round(proba * 100, 1))
 
-        return jsonify({
+        resp_obj = jsonify({
             'filename': filename,
             'prediction': pred,
             'probability': round(proba * 100, 1),
@@ -338,6 +358,28 @@ def analyze_email():
             'shap': shap_data,
             'geo': geo_data
         })
+
+        # Record real email investigation
+        eml_risk_level = "LOW"
+        if proba >= 0.7:
+            eml_risk_level = "HIGH"
+        elif proba >= 0.35:
+            eml_risk_level = "MEDIUM"
+
+        subject = headers.get('Subject') or filename
+        inv_id = f"INV-EML-{int(time.time()*1000)%1000000:06d}"
+        save_real_investigation({
+            'id': inv_id,
+            'target': subject[:60],
+            'display_name': subject[:60],
+            'type': "Email Investigation",
+            'risk_level': eml_risk_level,
+            'risk_score': round(proba * 100, 1),
+            'summary': threat_indicators[0] if threat_indicators else f"Email analyzed ({risk_level})",
+            'status': "Completed"
+        })
+
+        return resp_obj
     except Exception as e:
         return jsonify({'error': f'Email analysis failed: {str(e)}'}), 500
 
@@ -375,6 +417,29 @@ def analyze_history():
                 'features': feat_dict,
                 'geo': get_geo_metadata(url, round(proba * 100, 1))
             })
+
+        if scored_items:
+            max_prob = max(item['probability'] for item in scored_items)
+            danger_count = sum(1 for item in scored_items if item['badge_class'] == 'danger')
+            warn_count = sum(1 for item in scored_items if item['badge_class'] == 'warning')
+            hist_lvl = "LOW"
+            if danger_count > 0 or max_prob >= 70:
+                hist_lvl = "HIGH"
+            elif warn_count > 0 or max_prob >= 35:
+                hist_lvl = "MEDIUM"
+
+            inv_id = f"INV-BRW-{int(time.time()*1000)%1000000:06d}"
+            save_real_investigation({
+                'id': inv_id,
+                'target': f"{browser.title()} History ({len(scored_items)} records)",
+                'display_name': f"Browser History ({browser.title()})",
+                'type': "Browser History Investigation",
+                'risk_level': hist_lvl,
+                'risk_score': max_prob,
+                'summary': f"Audited {len(scored_items)} history records. Detected {danger_count} threat flags.",
+                'status': "Completed"
+            })
+
         return jsonify({'history': scored_items, 'count': len(scored_items)})
     except Exception as e:
         return jsonify({'error': f'Browser history forensics failed: {str(e)}'}), 500
@@ -549,67 +614,149 @@ def analyze_batch():
 # DASHBOARD TELEMETRY & AGENT STATS ENDPOINT
 # ==============================================================================
 
-dashboard_stats_data = {
-    'total_investigations': 24,
-    'low_risk': 12,
-    'medium_risk': 6,
-    'high_risk': 4,
-    'critical_risk': 2,
-    'agent_status': 'ONLINE',
-    'recent_investigations': [
-        {
-            'id': 'INV-20261001-A901B2',
-            'target': 'suspicious-email',
-            'display_name': 'Apple ID Locked - Foreign Login Alert',
-            'type': 'email',
-            'risk_level': 'HIGH',
-            'risk_score': 91.6,
-            'time_ago': '2 min ago',
-            'timestamp': '2026-10-01 13:25:12',
-            'summary': 'Spoofed Apple Support email containing credential harvesting URL on .top domain'
-        },
-        {
-            'id': 'INV-20261001-C412D3',
-            'target': 'example-url',
-            'display_name': 'PayPal Billing Verification Portal',
-            'type': 'url',
-            'risk_level': 'LOW',
-            'risk_score': 18.2,
-            'time_ago': '10 min ago',
-            'timestamp': '2026-10-01 13:17:40',
-            'summary': 'Verified legitimate domain structure with passing cryptographic authentication'
-        },
-        {
-            'id': 'INV-20261001-E831F4',
-            'target': 'browser-history',
-            'display_name': 'Workstation Endpoint Chrome History',
-            'type': 'browser_history',
-            'risk_level': 'MEDIUM',
-            'risk_score': 54.0,
-            'time_ago': '18 min ago',
-            'timestamp': '2026-10-01 13:09:15',
-            'summary': 'Anomalous navigation spike to unclassified domains following link redirection'
-        },
-        {
-            'id': 'INV-20261001-F992E5',
-            'target': 'phishing_urgent_bank_alert.eml',
-            'display_name': 'Chase Wire Fraud Alert ($4,850)',
-            'type': 'email',
-            'risk_level': 'CRITICAL',
-            'risk_score': 99.0,
-            'time_ago': '26 min ago',
-            'timestamp': '2026-10-01 13:01:02',
-            'summary': 'Multi-URL delivery with direct IP address endpoint and severe NLP coercion'
-        }
-    ]
-}
+INVESTIGATIONS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'investigations_db.json')
+investigations_lock = threading.Lock()
+
+def load_real_investigations():
+    """Loads all real, user-generated investigation records from persistent storage."""
+    with investigations_lock:
+        if not os.path.exists(INVESTIGATIONS_DB_PATH):
+            return []
+        try:
+            with open(INVESTIGATIONS_DB_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+                return []
+        except Exception as e:
+            print(f"[Forensic Engine DB] Error loading investigations: {e}")
+            return []
+
+def save_real_investigation(record):
+    """
+    Persists a genuine investigation record to the database.
+    Calculates formatted date and ensures uniform schema.
+    """
+    now = time.time()
+    if 'timestamp' not in record or not record['timestamp']:
+        record['timestamp'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(now))
+    if 'formatted_date' not in record or not record['formatted_date']:
+        record['formatted_date'] = time.strftime('%b %d, %Y %I:%M %p', time.localtime(now))
+    if 'time_ago' not in record or not record['time_ago']:
+        record['time_ago'] = 'Just now'
+    if 'status' not in record or not record['status']:
+        record['status'] = 'Completed'
+
+    with investigations_lock:
+        records = []
+        if os.path.exists(INVESTIGATIONS_DB_PATH):
+            try:
+                with open(INVESTIGATIONS_DB_PATH, 'r', encoding='utf-8') as f:
+                    records = json.load(f)
+                    if not isinstance(records, list):
+                        records = []
+            except Exception as e:
+                print(f"[Forensic Engine DB] Read error prior to save: {e}")
+                records = []
+
+        # Deduplicate or update if same ID exists
+        existing_idx = next((i for i, r in enumerate(records) if r.get('id') == record.get('id')), None)
+        if existing_idx is not None:
+            records[existing_idx] = record
+        else:
+            records.insert(0, record)
+
+        # Atomic write with temp file
+        temp_path = INVESTIGATIONS_DB_PATH + '.tmp'
+        try:
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                json.dump(records, f, indent=2, ensure_ascii=False)
+            if os.path.exists(INVESTIGATIONS_DB_PATH):
+                os.replace(temp_path, INVESTIGATIONS_DB_PATH)
+            else:
+                os.rename(temp_path, INVESTIGATIONS_DB_PATH)
+        except Exception as e:
+            print(f"[Forensic Engine DB] Error writing investigation record: {e}")
+            if os.path.exists(temp_path):
+                try: os.remove(temp_path)
+                except Exception: pass
+
+    # Also keep in in-memory cache for fast report rendering
+    if 'id' in record:
+        investigations_cache[record['id']] = record.get('report') or record
+    return record
 
 @app.route('/api/dashboard/stats', methods=['GET'])
 def get_dashboard_stats():
-    """Returns high-level forensic dashboard metrics and recent investigation audit records."""
-    response = jsonify(dashboard_stats_data)
+    """Returns high-level forensic dashboard metrics calculated strictly from real stored data."""
+    records = load_real_investigations()
+    
+    total = len(records)
+    low_count = sum(1 for r in records if str(r.get('risk_level', '')).upper() == 'LOW')
+    med_count = sum(1 for r in records if str(r.get('risk_level', '')).upper() in ('MEDIUM', 'SUSPICIOUS', 'MODERATE'))
+    high_count = sum(1 for r in records if str(r.get('risk_level', '')).upper() in ('HIGH', 'ELEVATED'))
+    crit_count = sum(1 for r in records if str(r.get('risk_level', '')).upper() in ('CRITICAL', 'SEVERE'))
+
+    # Format recent investigations for the dashboard view
+    recent = []
+    for r in records[:10]:
+        recent.append({
+            'id': r.get('id', ''),
+            'target': r.get('target', ''),
+            'display_name': r.get('display_name', r.get('target', '')),
+            'type': r.get('type', 'Investigation'),
+            'risk_level': (r.get('risk_level') or 'LOW').upper(),
+            'risk_score': r.get('risk_score', 0),
+            'time_ago': r.get('time_ago') or r.get('formatted_date') or r.get('timestamp') or 'Recent',
+            'timestamp': r.get('formatted_date') or r.get('timestamp') or '',
+            'summary': r.get('summary', ''),
+            'status': r.get('status', 'Completed')
+        })
+
+    data = {
+        'total_investigations': total,
+        'low_risk': low_count,
+        'medium_risk': med_count,
+        'high_risk': high_count,
+        'critical_risk': crit_count,
+        'agent_status': 'ONLINE',
+        'recent_investigations': recent
+    }
+    response = jsonify(data)
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response
+
+@app.route('/api/investigations', methods=['GET'])
+def get_all_investigations():
+    """Returns all real stored forensic investigations."""
+    records = load_real_investigations()
+    response = jsonify({'investigations': records, 'total': len(records)})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
+@app.route('/api/investigations/<inv_id>', methods=['GET'])
+def get_investigation_by_id(inv_id):
+    """Returns details for a specific investigation."""
+    records = load_real_investigations()
+    match = next((r for r in records if r.get('id') == inv_id), None)
+    if not match:
+        return jsonify({'error': f'Investigation {inv_id} not found'}), 404
+    response = jsonify(match)
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
+@app.route('/api/investigations/clear', methods=['POST', 'DELETE'])
+def clear_all_investigations():
+    """Clears investigation database for a clean state."""
+    with investigations_lock:
+        if os.path.exists(INVESTIGATIONS_DB_PATH):
+            try:
+                with open(INVESTIGATIONS_DB_PATH, 'w', encoding='utf-8') as f:
+                    json.dump([], f)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+    investigations_cache.clear()
+    return jsonify({'status': 'success', 'message': 'All investigation records cleared.'})
 
 # ==============================================================================
 # AI FORENSIC INVESTIGATION AGENT API ENDPOINTS
@@ -617,7 +764,7 @@ def get_dashboard_stats():
 
 @app.route('/api/agent/scenarios', methods=['GET'])
 def get_agent_scenarios():
-    """Returns curated realistic forensic scenarios for live hackathon demonstration."""
+    """Returns curated realistic forensic scenarios for investigation testing."""
     sample_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_emails')
     scenarios = []
 
@@ -746,31 +893,38 @@ def agent_investigate():
         # Cache report
         investigations_cache[report['investigation_id']] = report
 
-        # Dynamically update dashboard telemetry
-        dashboard_stats_data['total_investigations'] += 1
-        lvl = report.get('risk_level', 'MEDIUM').upper()
-        if lvl == 'CRITICAL':
-            dashboard_stats_data['critical_risk'] += 1
-        elif lvl == 'HIGH':
-            dashboard_stats_data['high_risk'] += 1
-        elif lvl == 'MEDIUM':
-            dashboard_stats_data['medium_risk'] += 1
+        # Determine normalized risk level string
+        raw_lvl = report.get('risk_level', 'MEDIUM').upper()
+        if 'CRITICAL' in raw_lvl or 'SEVERE' in raw_lvl:
+            lvl = 'CRITICAL'
+        elif 'HIGH' in raw_lvl or 'ELEVATED' in raw_lvl:
+            lvl = 'HIGH'
+        elif 'SUSPICIOUS' in raw_lvl or 'MEDIUM' in raw_lvl or 'MODERATE' in raw_lvl:
+            lvl = 'MEDIUM'
         else:
-            dashboard_stats_data['low_risk'] += 1
+            lvl = 'LOW'
 
-        target_display = str(input_text or req_type)[:40].strip()
-        dashboard_stats_data['recent_investigations'].insert(0, {
+        target_display = str(input_text or req_type)[:60].strip()
+        type_display = "AI Agent Investigation"
+        if req_type == 'email':
+            type_display = "Email Investigation"
+        elif req_type == 'url':
+            type_display = "URL Investigation"
+        elif 'history' in req_type or 'browser' in req_type:
+            type_display = "Browser History Investigation"
+
+        # Save to persistent real investigations database
+        save_real_investigation({
             'id': report['investigation_id'],
             'target': target_display or req_type,
-            'display_name': report.get('summary', '')[:45] or f"Investigation {report['investigation_id']}",
-            'type': req_type,
+            'display_name': report.get('title') or ((report.get('summary', '')[:50] + '...') if report.get('summary') else f"{type_display} - {report['investigation_id']}"),
+            'type': type_display,
             'risk_level': lvl,
             'risk_score': report.get('risk_score', 0),
-            'time_ago': 'Just now',
-            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'summary': report.get('summary', '')
+            'summary': report.get('summary', ''),
+            'status': 'Completed',
+            'report': report
         })
-        dashboard_stats_data['recent_investigations'] = dashboard_stats_data['recent_investigations'][:10]
 
         response = jsonify(report)
         response.headers.add("Access-Control-Allow-Origin", "*")
@@ -1017,7 +1171,7 @@ def generate_agent_report_html(inv_id):
     </div>
 
     <div class="footer">
-        <div>BharatAgentic Hackathon | Powered by aiKart &copy; 2026</div>
+        <div>FORENSIC ENGINE | Enterprise Digital Forensics &copy; 2026</div>
         <div>SOC Digital Forensics Investigation Engine | Confidential Cyber Incident Report</div>
     </div>
 </body>
@@ -1151,7 +1305,7 @@ def generate_report():
 
     <div class="footer">
         <div>Automated Cryptographic & Machine Learning Threat Dossier</div>
-        <div>SOC Forensics Engine &copy; 2026 &nbsp;|&nbsp; Confidential System Report</div>
+        <div>FORENSIC ENGINE &copy; 2026 &nbsp;|&nbsp; Confidential System Report</div>
     </div>
 </body>
 </html>"""

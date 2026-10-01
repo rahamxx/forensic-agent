@@ -183,6 +183,10 @@ function switchTab(targetId, tabElement = null) {
     if (targetId === 'tab-dashboard' && typeof initDashboardOverview === 'function') {
         initDashboardOverview();
     }
+    // Refresh investigation history if history tab is shown
+    if (targetId === 'tab-inv-history' && typeof loadInvestigationHistory === 'function') {
+        loadInvestigationHistory();
+    }
 }
 
 // --- Chart Initialization ---
@@ -342,6 +346,8 @@ async function analyzeUrl() {
         }
 
         updateLiveCounters(data.probability >= 35);
+        if (typeof initDashboardOverview === 'function') initDashboardOverview();
+        if (typeof loadInvestigationHistory === 'function') loadInvestigationHistory();
 
         if (urlChartInstance) {
             urlChartInstance.data.datasets[0].data = [
@@ -474,6 +480,8 @@ function renderEmailReport(data) {
     if (data.shap) renderShapBars('email-shap-container', 'email-shap-bars', data.shap);
     if (data.geo) addGeoMarker(data.geo, data.filename, data.probability, true);
     updateLiveCounters(data.probability >= 35);
+    if (typeof initDashboardOverview === 'function') initDashboardOverview();
+    if (typeof loadInvestigationHistory === 'function') loadInvestigationHistory();
 
     document.getElementById('email-body-preview').innerText = data.body_preview || "No readable plain text body.";
 }
@@ -587,6 +595,8 @@ function applyHistoryPayload(items) {
         }
     });
     renderHistoryTable();
+    if (typeof initDashboardOverview === 'function') initDashboardOverview();
+    if (typeof loadInvestigationHistory === 'function') loadInvestigationHistory();
     if (maxRiskItem) showHighRiskPopup(maxRiskItem);
 }
 
@@ -807,6 +817,16 @@ async function initDashboardOverview() {
     }
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function renderDashboardStats(data) {
     if (!data) return;
     const totalElem = document.getElementById('dash-stat-total');
@@ -815,61 +835,217 @@ function renderDashboardStats(data) {
     const highElem = document.getElementById('dash-stat-high');
     const critElem = document.getElementById('dash-stat-crit');
 
-    if (totalElem) totalElem.innerText = data.total_investigations ?? 24;
-    if (lowElem) lowElem.innerText = data.low_risk ?? 12;
-    if (medElem) medElem.innerText = data.medium_risk ?? 6;
-    if (highElem) highElem.innerText = data.high_risk ?? 4;
-    if (critElem) critElem.innerText = data.critical_risk ?? 2;
+    if (totalElem) totalElem.innerText = data.total_investigations !== undefined ? data.total_investigations : 0;
+    if (lowElem) lowElem.innerText = data.low_risk !== undefined ? data.low_risk : 0;
+    if (medElem) medElem.innerText = data.medium_risk !== undefined ? data.medium_risk : 0;
+    if (highElem) highElem.innerText = data.high_risk !== undefined ? data.high_risk : 0;
+    if (critElem) critElem.innerText = data.critical_risk !== undefined ? data.critical_risk : 0;
 
     const tbody = document.getElementById('dash-recent-investigations');
-    if (tbody && data.recent_investigations && Array.isArray(data.recent_investigations)) {
-        tbody.innerHTML = data.recent_investigations.map(inv => {
-            const risk = (inv.risk_level || 'MEDIUM').toUpperCase();
-            let badgeClass = 'bg-warning-amber/20 text-warning-amber border-warning-amber/30';
-            if (risk === 'CRITICAL') badgeClass = 'bg-neon-crimson/20 text-neon-crimson border-neon-crimson/30 animate-pulse';
-            else if (risk === 'HIGH') badgeClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-            else if (risk === 'LOW') badgeClass = 'bg-cyber-lime/20 text-cyber-lime border-cyber-lime/30';
+    if (!tbody) return;
 
-            let icon = 'manage_search';
-            let artifactLabel = 'Artifact Analysis';
-            const typeLower = (inv.type || '').toLowerCase();
-            if (typeLower.includes('email')) {
-                icon = 'mail';
-                artifactLabel = 'Email Message';
-            } else if (typeLower.includes('url')) {
-                icon = 'public';
-                artifactLabel = 'URL Analysis';
-            } else if (typeLower.includes('history') || typeLower.includes('browser')) {
-                icon = 'history';
-                artifactLabel = 'Endpoint History';
-            }
-
-            const targetName = inv.target || inv.display_name || inv.id;
-            const timeAgo = inv.time_ago || 'Recent';
-
-            return `
-                <tr class="hover:bg-surface-container-high/40 transition-colors">
-                    <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
-                        <span class="material-symbols-outlined text-sm text-cyber-lime">${icon}</span>
-                        <span class="truncate max-w-[280px]" title="${targetName}">${targetName}</span>
-                    </td>
-                    <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">${artifactLabel}</td>
-                    <td class="py-3.5 px-6">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">${risk}</span>
-                    </td>
-                    <td class="py-3.5 px-6 text-on-surface-variant text-xs">${timeAgo}</td>
-                    <td class="py-3.5 px-6 text-right">
-                        <button onclick="launchRecentInvestigation('${inv.id}')" class="text-xs text-cyber-lime hover:underline font-bold inline-flex items-center gap-1 justify-end ml-auto">
-                            Inspect <span class="material-symbols-outlined text-xs">arrow_forward</span>
+    if (!data.recent_investigations || data.recent_investigations.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="py-12 px-6 text-center text-on-surface-variant font-code-sm">
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-surface-container-high border border-glass-stroke flex items-center justify-center text-on-surface-variant/70">
+                            <span class="material-symbols-outlined text-2xl">manage_search</span>
+                        </div>
+                        <div class="font-bold text-base text-on-surface">No investigations yet.</div>
+                        <p class="text-xs text-on-surface-variant max-w-md">No investigation history available. Start your first investigation.</p>
+                        <button onclick="switchTab('tab-agent')" class="mt-2 text-xs font-bold text-cyber-lime hover:underline flex items-center gap-1.5">
+                            Start your first investigation <span class="material-symbols-outlined text-sm">arrow_forward</span>
                         </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = data.recent_investigations.map(inv => {
+        const risk = (inv.risk_level || 'LOW').toUpperCase();
+        let badgeClass = 'bg-cyber-lime/20 text-cyber-lime border-cyber-lime/30';
+        if (risk === 'CRITICAL' || risk === 'SEVERE') badgeClass = 'bg-neon-crimson/20 text-neon-crimson border-neon-crimson/30 animate-pulse';
+        else if (risk === 'HIGH' || risk === 'ELEVATED') badgeClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        else if (risk === 'MEDIUM' || risk === 'SUSPICIOUS' || risk === 'MODERATE') badgeClass = 'bg-warning-amber/20 text-warning-amber border-warning-amber/30';
+
+        let icon = 'manage_search';
+        let artifactLabel = inv.type || 'Investigation';
+        const typeLower = (inv.type || '').toLowerCase();
+        if (typeLower.includes('email')) {
+            icon = 'mail';
+            artifactLabel = 'Email Investigation';
+        } else if (typeLower.includes('url')) {
+            icon = 'public';
+            artifactLabel = 'URL Investigation';
+        } else if (typeLower.includes('history') || typeLower.includes('browser')) {
+            icon = 'history';
+            artifactLabel = 'Browser History Investigation';
+        } else if (typeLower.includes('agent')) {
+            icon = 'psychology';
+            artifactLabel = 'AI Agent Investigation';
+        }
+
+        const targetName = inv.target || inv.display_name || inv.id;
+        const timeDisplay = inv.timestamp || inv.formatted_date || inv.time_ago || 'Recent';
+
+        return `
+            <tr class="hover:bg-surface-container-high/40 transition-colors">
+                <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-sm text-cyber-lime">${icon}</span>
+                    <div class="flex flex-col">
+                        <span class="truncate max-w-[280px]" title="${escapeHtml(targetName)}">${escapeHtml(targetName)}</span>
+                        ${inv.summary ? `<span class="text-[11px] text-on-surface-variant font-normal truncate max-w-[280px]">${escapeHtml(inv.summary)}</span>` : ''}
+                    </div>
+                </td>
+                <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">${escapeHtml(artifactLabel)}</td>
+                <td class="py-3.5 px-6">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">${risk}</span>
+                </td>
+                <td class="py-3.5 px-6 text-on-surface-variant text-xs">${escapeHtml(timeDisplay)}</td>
+                <td class="py-3.5 px-6 text-right">
+                    <button onclick="launchRecentInvestigation('${inv.id}')" class="text-xs text-cyber-lime hover:underline font-bold inline-flex items-center gap-1 justify-end ml-auto">
+                        Inspect <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+let allInvestigationRecords = [];
+
+async function loadInvestigationHistory() {
+    try {
+        const resp = await fetch('/api/investigations');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        allInvestigationRecords = data.investigations || [];
+        renderInvestigationHistoryTable();
+    } catch (e) {
+        console.warn("Could not load full investigation history:", e);
     }
 }
 
-function launchRecentInvestigation(invId) {
+function renderInvestigationHistoryTable() {
+    const tbody = document.getElementById('inv-history-table-body');
+    if (!tbody) return;
+
+    const searchInput = document.getElementById('inv-history-search');
+    const filterRisk = document.getElementById('inv-history-filter-risk');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const riskFilter = filterRisk ? filterRisk.value.toUpperCase() : 'ALL';
+
+    let filtered = allInvestigationRecords.filter(inv => {
+        const matchesQuery = !query ||
+            (inv.target && inv.target.toLowerCase().includes(query)) ||
+            (inv.id && inv.id.toLowerCase().includes(query)) ||
+            (inv.summary && inv.summary.toLowerCase().includes(query)) ||
+            (inv.type && inv.type.toLowerCase().includes(query));
+        
+        const invRisk = (inv.risk_level || '').toUpperCase();
+        const matchesRisk = riskFilter === 'ALL' || invRisk === riskFilter;
+        return matchesQuery && matchesRisk;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="py-12 px-6 text-center text-on-surface-variant font-code-sm">
+                    <div class="flex flex-col items-center justify-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-surface-container-high border border-glass-stroke flex items-center justify-center text-on-surface-variant/70">
+                            <span class="material-symbols-outlined text-2xl">folder_open</span>
+                        </div>
+                        <div class="font-bold text-base text-on-surface">No investigations match the criteria.</div>
+                        <p class="text-xs text-on-surface-variant max-w-md">No investigation history available. Start your first investigation.</p>
+                        <button onclick="switchTab('tab-agent')" class="mt-2 text-xs font-bold text-cyber-lime hover:underline flex items-center gap-1.5">
+                            Start your first investigation <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(inv => {
+        const risk = (inv.risk_level || 'LOW').toUpperCase();
+        let badgeClass = 'bg-cyber-lime/20 text-cyber-lime border-cyber-lime/30';
+        if (risk === 'CRITICAL' || risk === 'SEVERE') badgeClass = 'bg-neon-crimson/20 text-neon-crimson border-neon-crimson/30 animate-pulse';
+        else if (risk === 'HIGH' || risk === 'ELEVATED') badgeClass = 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+        else if (risk === 'MEDIUM' || risk === 'SUSPICIOUS' || risk === 'MODERATE') badgeClass = 'bg-warning-amber/20 text-warning-amber border-warning-amber/30';
+
+        let icon = 'manage_search';
+        const typeLower = (inv.type || '').toLowerCase();
+        if (typeLower.includes('email')) icon = 'mail';
+        else if (typeLower.includes('url')) icon = 'public';
+        else if (typeLower.includes('history') || typeLower.includes('browser')) icon = 'history';
+        else if (typeLower.includes('agent')) icon = 'psychology';
+
+        const targetName = inv.target || inv.display_name || inv.id;
+        const timeDisplay = inv.timestamp || inv.formatted_date || inv.time_ago || 'Recent';
+
+        return `
+            <tr class="hover:bg-surface-container-high/40 transition-colors border-b border-glass-stroke/30">
+                <td class="py-3.5 px-6 font-mono text-xs text-cyber-lime font-bold">${escapeHtml(inv.id || 'N/A')}</td>
+                <td class="py-3.5 px-6 font-semibold text-on-surface flex items-center gap-2.5">
+                    <span class="material-symbols-outlined text-sm text-cyber-lime">${icon}</span>
+                    <div class="flex flex-col">
+                        <span class="truncate max-w-[240px]" title="${escapeHtml(targetName)}">${escapeHtml(targetName)}</span>
+                        ${inv.summary ? `<span class="text-[11px] text-on-surface-variant font-normal truncate max-w-[240px]">${escapeHtml(inv.summary)}</span>` : ''}
+                    </div>
+                </td>
+                <td class="py-3.5 px-6 text-on-surface-variant text-xs uppercase">${escapeHtml(inv.type || 'Investigation')}</td>
+                <td class="py-3.5 px-6">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">${risk}</span>
+                </td>
+                <td class="py-3.5 px-6 text-on-surface-variant text-xs">${escapeHtml(timeDisplay)}</td>
+                <td class="py-3.5 px-6 text-right">
+                    <button onclick="launchRecentInvestigation('${inv.id}')" class="text-xs text-cyber-lime hover:underline font-bold inline-flex items-center gap-1 justify-end ml-auto">
+                        Inspect <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function clearInvestigationHistory() {
+    if (!confirm("Are you sure you want to clear all investigation records? This will reset all metrics to 0.")) return;
+    try {
+        const resp = await fetch('/api/investigations/clear', { method: 'POST' });
+        if (resp.ok) {
+            allInvestigationRecords = [];
+            initDashboardOverview();
+            renderInvestigationHistoryTable();
+        }
+    } catch (e) {
+        console.warn("Failed to clear investigation history:", e);
+    }
+}
+
+async function launchRecentInvestigation(invId) {
+    if (!invId) return;
+    try {
+        const resp = await fetch(`/api/investigations/${invId}`);
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.report && typeof renderAgentInvestigation === 'function') {
+                if (typeof switchTab === 'function') switchTab('tab-agent');
+                currentInvestigation = data.report;
+                currentInvestigationId = data.id;
+                renderAgentInvestigation(data.report);
+                const agentTab = document.getElementById('tab-agent');
+                if (agentTab) agentTab.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn("Could not fetch investigation details:", e);
+    }
+
     if (typeof switchTab === 'function') {
         switchTab('tab-agent');
     }
